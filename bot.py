@@ -95,20 +95,33 @@ async def resolve_target(update, context):
     if update.message.reply_to_message:
         return update.message.reply_to_message.from_user
     if context.args:
-        ident = context.args[0].lstrip("@")
-        # Try as numeric user ID
+        raw = context.args[0]
+        ident = raw.lstrip("@")
+
+        # 1. Try as numeric user ID
         try:
-            m = await context.bot.get_chat_member(update.effective_chat.id, int(ident))
+            uid = int(ident)
+            m = await context.bot.get_chat_member(update.effective_chat.id, uid)
             return m.user
         except Exception:
             pass
-        # Try by username directly from Telegram (works even without /start)
+
+        # 2. Try get_chat by @username to get the user_id, then get_chat_member
+        try:
+            chat_user = await context.bot.get_chat(f"@{ident}")
+            m = await context.bot.get_chat_member(update.effective_chat.id, chat_user.id)
+            return m.user
+        except Exception:
+            pass
+
+        # 3. Try get_chat_member directly with @username string (supergroups)
         try:
             m = await context.bot.get_chat_member(update.effective_chat.id, f"@{ident}")
             return m.user
         except Exception:
             pass
-        # Try from local DB
+
+        # 4. Try from local DB
         u = db.find_user_by_username(ident)
         if u:
             try:
@@ -184,7 +197,7 @@ COMMANDS_SECTIONS = {
             ("⬆️ Повысить", "/promote @user [роль|0-5]", False, "!повысить"),
             ("⬇️ Понизить на 1", "/demote @user", False, "!понизить"),
             ("🔻 Разжаловать до Игрока", "/firekick @user", False, "!разжаловать"),
-            ("👥 Список ролей", "/roles", False, "!роли"),
+            ("👥 Состав сервера", "/staff", False, "!админы"),
             ("🆔 Моя должность", "/whoami", False, None),
             ("🏷 Ник", "/nick [текст|@user]", False, "!ник"),
         ]
@@ -786,12 +799,15 @@ async def firekick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🔻 {target.mention_html()} разжалован до <b>{player_role['emoji']} {player_role['name']}</b>.")
 
 @group_only
-async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def staff_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     chat_roles = db.get_chat_roles(chat.id)
 
     by_rank: dict = {}
     for r in chat_roles:
+        # Skip rank 0 (Игрок) — показываем только стафф
+        if r["rank"] <= 0:
+            continue
         by_rank.setdefault(r["rank"], []).append(r)
 
     # Add TG owner and admins from Telegram
@@ -799,8 +815,9 @@ async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tg_admins = await context.bot.get_chat_administrators(chat.id)
         for admin in tg_admins:
             u = admin.user
+            if u.is_bot:
+                continue
             if admin.status == ChatMemberStatus.OWNER:
-                # Group owner = Создатель (rank 5) in bot
                 existing = db.get_role(chat.id, u.id)
                 if not existing or existing["rank"] < 5:
                     by_rank.setdefault(5, []).append({
@@ -811,7 +828,6 @@ async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         "_tg_owner": True
                     })
             elif admin.status == ChatMemberStatus.ADMINISTRATOR:
-                # TG admins = at least Админ (rank 3) if not already listed higher
                 existing = db.get_role(chat.id, u.id)
                 if not existing or existing["rank"] < 3:
                     by_rank.setdefault(3, []).append({
@@ -834,11 +850,16 @@ async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 deduped.append(m)
         by_rank[rank_key] = deduped
 
-    text = f"👥 <b>Должности в чате «{chat.title}»:</b>\n"
-    for role in reversed(ROLES_HIERARCHY):
+    # Only show ranks >= 1 (Модератор и выше)
+    staff_ranks = [r for r in reversed(ROLES_HIERARCHY) if r["rank"] >= 1]
+
+    text = f"👥 <b>Состав «{chat.title}»:</b>\n"
+    found_any = False
+    for role in staff_ranks:
         members = by_rank.get(role["rank"], [])
         if not members:
             continue
+        found_any = True
         names = []
         for m in members:
             suffix = " 👑" if m.get("_tg_owner") else (" 🔧" if m.get("_tg_admin") else "")
@@ -848,7 +869,7 @@ async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 names.append(f"<code>{m['user_id']}</code>{suffix}")
         text += f"\n{role['emoji']} <b>{role['name']} ({role['rank']}):</b>\n  " + ", ".join(names) + "\n"
 
-    if not by_rank:
+    if not found_any:
         text += "\nПока никому не назначены должности."
     await answer_text(update, text)
 
@@ -1927,7 +1948,7 @@ EXCL_ALIASES = {
     "!повысить":    promote_cmd,
     "!понизить":    demote_cmd,
     "!разжаловать": firekick_cmd,
-    "!роли":        roles_cmd,
+    "!админы":      staff_cmd,
     "!профиль":     profile_cmd,
     "!+брак":       marry_cmd,
     "!развод":      divorce_cmd,
@@ -2035,7 +2056,7 @@ def main():
     app.add_handler(CommandHandler("promote", promote_cmd))
     app.add_handler(CommandHandler("demote", demote_cmd))
     app.add_handler(CommandHandler("firekick", firekick_cmd))
-    app.add_handler(CommandHandler(["roles", "admins"], roles_cmd))
+    app.add_handler(CommandHandler(["staff", "admins"], staff_cmd))
     app.add_handler(CommandHandler("nick", nick_cmd))
 
     # Заметки и фильтры
