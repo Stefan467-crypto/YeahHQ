@@ -106,29 +106,40 @@ async def resolve_target(update, context):
         except Exception:
             pass
 
-        # 2. Try get_chat by @username to get the user_id, then get_chat_member
-        try:
-            chat_user = await context.bot.get_chat(f"@{ident}")
-            m = await context.bot.get_chat_member(update.effective_chat.id, chat_user.id)
-            return m.user
-        except Exception:
-            pass
-
-        # 3. Try get_chat_member directly with @username string (supergroups)
-        try:
-            m = await context.bot.get_chat_member(update.effective_chat.id, f"@{ident}")
-            return m.user
-        except Exception:
-            pass
-
-        # 4. Try from local DB
-        u = db.find_user_by_username(ident)
-        if u:
+        # 2. Look up in chat_members DB (populated from flood_check on every message)
+        chat_id = update.effective_chat.id
+        uid_from_db = db.find_in_chat_by_username(chat_id, ident)
+        if uid_from_db:
             try:
-                m = await context.bot.get_chat_member(update.effective_chat.id, u["user_id"])
+                m = await context.bot.get_chat_member(chat_id, uid_from_db)
                 return m.user
             except Exception:
                 pass
+
+        # 3. Look up in global users DB
+        u = db.find_user_by_username(ident)
+        if u:
+            try:
+                m = await context.bot.get_chat_member(chat_id, u["user_id"])
+                return m.user
+            except Exception:
+                pass
+
+        # 4. Try get_chat by @username (works for public users)
+        try:
+            chat_user = await context.bot.get_chat(f"@{ident}")
+            m = await context.bot.get_chat_member(chat_id, chat_user.id)
+            return m.user
+        except Exception:
+            pass
+
+        # 5. Try get_chat_member directly with @username (supergroups only)
+        try:
+            m = await context.bot.get_chat_member(chat_id, f"@{ident}")
+            return m.user
+        except Exception:
+            pass
+
     return None
 
 def group_only(f):
@@ -138,6 +149,10 @@ def group_only(f):
             return
         if db.is_chat_disabled(update.effective_chat.id):
             return
+        # Auto-save the command sender to chat_members for @username lookup
+        if update.effective_user:
+            u = update.effective_user
+            db.ensure_chat_member(update.effective_chat.id, u.id, u.username or "", u.full_name or "")
         return await f(update, context)
     w.__name__ = f.__name__
     return w
@@ -1681,7 +1696,7 @@ async def new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for m in update.message.new_chat_members:
         if m.is_bot:
             continue
-        db.ensure_user(m.id, m.username or "")
+        db.ensure_chat_member(chat.id, m.id, m.username or "", m.full_name or "")
         welcome = db.get_setting(chat.id, "welcome")
         if welcome:
             text = welcome.replace("{name}", m.mention_html()).replace("{chat}", chat.title or "")
@@ -1696,7 +1711,8 @@ async def flood_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     if db.is_chat_disabled(chat.id):
         return
-    db.ensure_user(user.id, user.username or "")
+    # Save user to both global and per-chat tables for @username lookup
+    db.ensure_chat_member(chat.id, user.id, user.username or "", user.full_name or "")
     db.add_activity(chat.id, user.id, 1)
 
     limit_str = db.get_setting(chat.id, "antiflood")

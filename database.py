@@ -129,6 +129,13 @@ def init_db():
         nick TEXT,
         PRIMARY KEY (chat_id, user_id)
     );
+    CREATE TABLE IF NOT EXISTS chat_members (
+        chat_id INTEGER,
+        user_id INTEGER,
+        username TEXT,
+        full_name TEXT,
+        PRIMARY KEY (chat_id, user_id)
+    );
     """)
     # Migrate: add is_main column if not exists
     try:
@@ -161,6 +168,35 @@ def ensure_user(user_id, username):
     )
     conn.commit()
     conn.close()
+
+def ensure_chat_member(chat_id, user_id, username, full_name=""):
+    """Save a user seen in a specific chat — enables @username lookup per chat."""
+    conn = get_conn()
+    conn.execute(
+        "INSERT OR REPLACE INTO chat_members (chat_id, user_id, username, full_name) VALUES (?,?,?,?)",
+        (chat_id, user_id, (username or "").lower(), full_name or "")
+    )
+    # Also update global users table
+    conn.execute(
+        "INSERT OR IGNORE INTO users (user_id, username) VALUES (?,?)",
+        (user_id, username or "")
+    )
+    conn.execute(
+        "UPDATE users SET username=? WHERE user_id=? AND (username IS NULL OR username='')",
+        (username or "", user_id)
+    )
+    conn.commit()
+    conn.close()
+
+def find_in_chat_by_username(chat_id, username):
+    """Find user_id by username within a specific chat."""
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT user_id FROM chat_members WHERE chat_id=? AND username=? COLLATE NOCASE",
+        (chat_id, username)
+    ).fetchone()
+    conn.close()
+    return row["user_id"] if row else None
 
 def find_user_by_username(username):
     conn = get_conn()
