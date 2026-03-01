@@ -92,53 +92,71 @@ async def can_act(acting_id, target_id, chat_id, context):
     return True, ""
 
 async def resolve_target(update, context):
-    if update.message.reply_to_message:
-        return update.message.reply_to_message.from_user
-    if context.args:
-        raw = context.args[0]
-        ident = raw.lstrip("@")
+    msg = update.message
 
-        # 1. Try as numeric user ID
+    # Priority 1: reply to message
+    if msg.reply_to_message:
+        return msg.reply_to_message.from_user
+
+    if not context.args:
+        return None
+
+    raw = context.args[0]
+    ident = raw.lstrip("@")
+    chat_id = update.effective_chat.id
+
+    # Priority 2: text_mention entity (user without @username — Telegram gives user object)
+    if msg.entities:
+        for ent in msg.entities:
+            if ent.type == "text_mention" and ent.user:
+                return ent.user
+
+    # Priority 3: Numeric user ID
+    if ident.isdigit():
         try:
-            uid = int(ident)
-            m = await context.bot.get_chat_member(update.effective_chat.id, uid)
+            m = await context.bot.get_chat_member(chat_id, int(ident))
+            return m.user
+        except Exception:
+            pass
+        return None  # was clearly an ID attempt, stop here
+
+    # Priority 4: chat_members DB (populated from every message sent in group)
+    uid_from_db = db.find_in_chat_by_username(chat_id, ident)
+    if uid_from_db:
+        try:
+            m = await context.bot.get_chat_member(chat_id, uid_from_db)
             return m.user
         except Exception:
             pass
 
-        # 2. Look up in chat_members DB (populated from flood_check on every message)
-        chat_id = update.effective_chat.id
-        uid_from_db = db.find_in_chat_by_username(chat_id, ident)
-        if uid_from_db:
-            try:
-                m = await context.bot.get_chat_member(chat_id, uid_from_db)
-                return m.user
-            except Exception:
-                pass
-
-        # 3. Look up in global users DB
-        u = db.find_user_by_username(ident)
-        if u:
-            try:
-                m = await context.bot.get_chat_member(chat_id, u["user_id"])
-                return m.user
-            except Exception:
-                pass
-
-        # 4. Try get_chat by @username (works for public users)
+    # Priority 5: global users DB
+    u = db.find_user_by_username(ident)
+    if u:
         try:
-            chat_user = await context.bot.get_chat(f"@{ident}")
+            m = await context.bot.get_chat_member(chat_id, u["user_id"])
+            return m.user
+        except Exception:
+            pass
+
+    # Priority 6: get_chat(@username) to resolve user_id, then get_chat_member
+    try:
+        chat_user = await context.bot.get_chat(f"@{ident}")
+        try:
             m = await context.bot.get_chat_member(chat_id, chat_user.id)
             return m.user
         except Exception:
-            pass
+            # We found the user but they may not be in this chat
+            # Still return them so commands can proceed
+            return chat_user
+    except Exception:
+        pass
 
-        # 5. Try get_chat_member directly with @username (supergroups only)
-        try:
-            m = await context.bot.get_chat_member(chat_id, f"@{ident}")
-            return m.user
-        except Exception:
-            pass
+    # Priority 7: direct get_chat_member(@username) — works in some supergroups
+    try:
+        m = await context.bot.get_chat_member(chat_id, f"@{ident}")
+        return m.user
+    except Exception:
+        pass
 
     return None
 
@@ -485,7 +503,7 @@ async def mute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db.ensure_user(acting.id, acting.username or "")
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя (реплай или @username).")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ok, reason = await can_act(acting.id, target.id, chat.id, context)
     if not ok:
         return await answer_text(update, reason)
@@ -514,7 +532,7 @@ async def unmute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ok, reason = await can_act(acting.id, target.id, chat.id, context)
     if not ok:
         return await answer_text(update, reason)
@@ -538,7 +556,7 @@ async def kick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ok, reason = await can_act(acting.id, target.id, chat.id, context)
     if not ok:
         return await answer_text(update, reason)
@@ -556,7 +574,7 @@ async def ban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ok, reason = await can_act(acting.id, target.id, chat.id, context)
     if not ok:
         return await answer_text(update, reason)
@@ -583,7 +601,7 @@ async def unban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ar = await get_rank(chat.id, acting.id, context)
     if ar < 900:
         return await answer_text(update, "❌ Недостаточно прав.")
@@ -601,7 +619,7 @@ async def warn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ok, reason = await can_act(acting.id, target.id, chat.id, context)
     if not ok:
         return await answer_text(update, reason)
@@ -628,7 +646,7 @@ async def unwarn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     ok, reason = await can_act(acting.id, target.id, chat.id, context)
     if not ok:
         return await answer_text(update, reason)
@@ -679,7 +697,7 @@ async def promote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя (реплай или @username).")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
 
     ar = await get_rank(chat.id, acting.id, context)
     tr = await get_rank(chat.id, target.id, context)
@@ -748,7 +766,7 @@ async def demote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
 
     ar = await get_rank(chat.id, acting.id, context)
     tr = await get_rank(chat.id, target.id, context)
@@ -784,7 +802,7 @@ async def firekick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
 
     ar = await get_rank(chat.id, acting.id, context)
     tr = await get_rank(chat.id, target.id, context)
@@ -1688,6 +1706,24 @@ async def paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #  СИСТЕМНЫЕ ОБРАБОТЧИКИ
 # ═══════════════════════════════════════════════════════════════════
 
+@group_only
+async def scan_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Кэшировать всех администраторов чата чтобы @username поиск работал."""
+    chat = update.effective_chat
+    try:
+        admins = await context.bot.get_chat_administrators(chat.id)
+        count = 0
+        for admin in admins:
+            u = admin.user
+            if u.is_bot:
+                continue
+            db.ensure_chat_member(chat.id, u.id, u.username or "", u.full_name or "")
+            count += 1
+        await answer_text(update, f"✅ Скан завершён: {count} участников сохранено в базе.\nТеперь команды с @username будут работать для всех кто написал в чат.")
+    except Exception as e:
+        await answer_text(update, f"❌ Ошибка при сканировании: {e}")
+
+
 async def new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     if db.is_chat_disabled(chat.id):
@@ -1937,7 +1973,7 @@ async def divorceforce_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     target = await resolve_target(update, context)
     if not target:
-        return await answer_text(update, "❌ Укажите пользователя.")
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
     chat_id = update.effective_chat.id
     m = db.is_married(target.id, chat_id)
     if not m:
@@ -2074,6 +2110,7 @@ def main():
     app.add_handler(CommandHandler("firekick", firekick_cmd))
     app.add_handler(CommandHandler(["staff", "admins"], staff_cmd))
     app.add_handler(CommandHandler("nick", nick_cmd))
+    app.add_handler(CommandHandler("scan", scan_cmd))
 
     # Заметки и фильтры
     app.add_handler(CommandHandler("note", note_cmd))
