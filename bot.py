@@ -96,11 +96,19 @@ async def resolve_target(update, context):
         return update.message.reply_to_message.from_user
     if context.args:
         ident = context.args[0].lstrip("@")
+        # Try as numeric user ID
         try:
             m = await context.bot.get_chat_member(update.effective_chat.id, int(ident))
             return m.user
         except Exception:
             pass
+        # Try by username directly from Telegram (works even without /start)
+        try:
+            m = await context.bot.get_chat_member(update.effective_chat.id, f"@{ident}")
+            return m.user
+        except Exception:
+            pass
+        # Try from local DB
         u = db.find_user_by_username(ident)
         if u:
             try:
@@ -174,7 +182,8 @@ COMMANDS_SECTIONS = {
         "title": "🎖 Должности",
         "commands": [
             ("⬆️ Повысить", "/promote @user [роль|0-5]", False, "!повысить"),
-            ("⬇️ Разжаловать", "/demote @user", False, "!разжаловать"),
+            ("⬇️ Понизить на 1", "/demote @user", False, "!понизить"),
+            ("🔻 Разжаловать до Игрока", "/firekick @user", False, "!разжаловать"),
             ("👥 Список ролей", "/roles", False, "!роли"),
             ("🆔 Моя должность", "/whoami", False, None),
             ("🏷 Ник", "/nick [текст|@user]", False, "!ник"),
@@ -706,6 +715,7 @@ async def promote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @group_only
 async def demote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Понизить на 1 должность (/demote, !понизить)"""
     acting = update.effective_user
     chat = update.effective_chat
     target = await resolve_target(update, context)
@@ -726,7 +736,6 @@ async def demote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if ar <= tr:
         return await answer_text(update, "❌ Нельзя применять действия к участнику с <b>равным или более высоким</b> рангом.")
 
-    # Создатели (rank 5) не могут понижать — только владелец группы или бот-владелец
     t_role = db.get_role(chat.id, target.id)
     t_real_rank = t_role["rank"] if t_role else 0
     if t_real_rank >= 5 and a_status != ChatMemberStatus.OWNER and not db.is_bot_owner(acting.id):
@@ -739,6 +748,42 @@ async def demote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db.set_role(chat.id, target.id, prev["name"], prev["rank"])
     await answer_text(update,
         f"⬇️ {target.mention_html()} понижен до <b>{prev['emoji']} {prev['name']}</b>.")
+
+@group_only
+async def firekick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Разжаловать до Игрока (ранг 0) (!разжаловать)"""
+    acting = update.effective_user
+    chat = update.effective_chat
+    target = await resolve_target(update, context)
+    if not target:
+        return await answer_text(update, "❌ Укажите пользователя.")
+
+    ar = await get_rank(chat.id, acting.id, context)
+    tr = await get_rank(chat.id, target.id, context)
+
+    if db.is_bot_owner(target.id):
+        return await answer_text(update, "❌ Этот пользователь — <b>владелец бота</b> и защищён от любых действий.")
+
+    t_status = await get_tg_status(chat.id, target.id, context)
+    a_status = await get_tg_status(chat.id, acting.id, context)
+    if t_status == ChatMemberStatus.ADMINISTRATOR and a_status != ChatMemberStatus.OWNER and not db.is_bot_owner(acting.id):
+        return await answer_text(update, "❌ Telegram-администратора может понижать только <b>владелец группы</b>.")
+
+    if ar <= tr:
+        return await answer_text(update, "❌ Нельзя применять действия к участнику с <b>равным или более высоким</b> рангом.")
+
+    t_role = db.get_role(chat.id, target.id)
+    t_real_rank = t_role["rank"] if t_role else 0
+    if t_real_rank >= 5 and a_status != ChatMemberStatus.OWNER and not db.is_bot_owner(acting.id):
+        return await answer_text(update, "❌ Разжаловать <b>Создателя</b> может только владелец группы.")
+
+    if t_real_rank <= 0:
+        return await answer_text(update, "❌ Участник уже является <b>Игроком</b>.")
+
+    player_role = ROLES_HIERARCHY[0]  # rank 0 = Игрок
+    db.set_role(chat.id, target.id, player_role["name"], player_role["rank"])
+    await answer_text(update,
+        f"🔻 {target.mention_html()} разжалован до <b>{player_role['emoji']} {player_role['name']}</b>.")
 
 @group_only
 async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1880,7 +1925,8 @@ EXCL_ALIASES = {
     "!разбан":      unban_cmd,
     "!варн":        warn_cmd,
     "!повысить":    promote_cmd,
-    "!разжаловать": demote_cmd,
+    "!понизить":    demote_cmd,
+    "!разжаловать": firekick_cmd,
     "!роли":        roles_cmd,
     "!профиль":     profile_cmd,
     "!+брак":       marry_cmd,
@@ -1988,6 +2034,7 @@ def main():
     # Должности
     app.add_handler(CommandHandler("promote", promote_cmd))
     app.add_handler(CommandHandler("demote", demote_cmd))
+    app.add_handler(CommandHandler("firekick", firekick_cmd))
     app.add_handler(CommandHandler(["roles", "admins"], roles_cmd))
     app.add_handler(CommandHandler("nick", nick_cmd))
 
