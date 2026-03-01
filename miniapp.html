@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Yeah HQ</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --surface2: #16213e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --text: #eaeaea;
+      --text2: #8888aa;
+      --green: #4caf50;
+      --gold: #ffd700;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      padding: 20px 16px 16px;
+      text-align: center;
+      position: relative;
+    }
+    .header-logo {
+      font-size: 40px;
+      line-height: 1;
+    }
+    .header-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    .header-sub {
+      font-size: 12px;
+      opacity: 0.75;
+      margin-top: 2px;
+    }
+    .user-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: 1;
+      min-width: 70px;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+    /* PAGES */
+    .page { display: none; padding: 16px; }
+    .page.active { display: block; }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    /* STAT GRID */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stat-item {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    .stat-item.gold .stat-value { color: var(--gold); }
+    .stat-item.green .stat-value { color: var(--green); }
+
+    /* PERIOD SELECTOR */
+    .period-btns {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .period-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: var(--text2);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .period-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* FEATURE LIST */
+    .feature-list { display: flex; flex-direction: column; gap: 8px; }
+    .feature-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .feature-name { font-size: 14px; font-weight: 600; }
+    .feature-price { font-size: 12px; color: var(--text2); }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-owned { background: rgba(76,175,80,0.2); color: var(--green); }
+    .badge-buy { background: rgba(233,69,96,0.2); color: var(--accent); cursor: pointer; }
+
+    /* TOP LIST */
+    .top-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+    .top-rank {
+      font-size: 20px;
+      width: 32px;
+      text-align: center;
+    }
+    .top-name { font-size: 14px; font-weight: 600; flex: 1; }
+    .top-score {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* SECTIONS */
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      color: white;
+    }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* LOADING */
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text2);
+    }
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* EARNINGS CHART */
+    .earnings-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .earnings-label { font-size: 13px; color: var(--text2); width: 70px; }
+    .earnings-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 10px; overflow: hidden; }
+    .earnings-bar { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 4px; transition: width 0.5s ease; }
+    .earnings-val { font-size: 13px; font-weight: 700; color: var(--gold); width: 50px; text-align: right; }
+
+    /* COMMANDS */
+    .cmd-section { margin-bottom: 16px; }
+    .cmd-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cmd-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+    }
+    .cmd-name { font-size: 13px; font-weight: 600; font-family: monospace; }
+    .cmd-desc { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .cmd-paid { font-size: 10px; color: var(--gold); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="user-badge" id="userBadge">...</div>
+  <div class="header-logo">🏠</div>
+  <div class="header-title">Yeah HQ</div>
+  <div class="header-sub">@YeahHQ_Bot · Panel</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('stats')">
+    <span class="tab-icon">📊</span>Статистика
+  </div>
+  <div class="tab" onclick="switchTab('features')">
+    <span class="tab-icon">💎</span>Функции
+  </div>
+  <div class="tab" onclick="switchTab('top')">
+    <span class="tab-icon">🏆</span>Топ
+  </div>
+  <div class="tab" onclick="switchTab('commands')">
+    <span class="tab-icon">📋</span>Команды
+  </div>
+  <div class="tab" onclick="switchTab('settings')">
+    <span class="tab-icon">⚙️</span>Бот
+  </div>
+</div>
+
+<!-- STATS PAGE -->
+<div id="page-stats" class="page active">
+  <div class="section-title">📊 Статистика</div>
+
+  <div class="period-btns">
+    <button class="period-btn active" onclick="setPeriod('day', this)">День</button>
+    <button class="period-btn" onclick="setPeriod('week', this)">Неделя</button>
+    <button class="period-btn" onclick="setPeriod('month', this)">Месяц</button>
+    <button class="period-btn" onclick="setPeriod('year', this)">Год</button>
+    <button class="period-btn" onclick="setPeriod('all', this)">Всё время</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="stat-users">—</div>
+      <div class="stat-label">👤 Пользователи</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="stat-groups">—</div>
+      <div class="stat-label">🏘 Группы</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="stat-actions">—</div>
+      <div class="stat-label">⚡ Действия</div>
+    </div>
+    <div class="stat-item gold">
+      <div class="stat-value" id="stat-earned">—</div>
+      <div class="stat-label">⭐ Заработано</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💰 Заработок по периодам</div>
+    <div id="earningsChart">
+      <div class="earnings-row">
+        <div class="earnings-label">Сегодня</div>
+        <div class="earnings-bar-wrap"><div class="earnings-bar" id="bar-day" style="width:0%"></div></div>
+        <div class="earnings-val" id="val-day">0 ⭐</div>
+      </div>
+      <div class="earnings-row">
+        <div class="earnings-label">Неделя</div>
+        <div class="earnings-bar-wrap"><div class="earnings-bar" id="bar-week" style="width:0%"></div></div>
+        <div class="earnings-val" id="val-week">0 ⭐</div>
+      </div>
+      <div class="earnings-row">
+        <div class="earnings-label">Месяц</div>
+        <div class="earnings-bar-wrap"><div class="earnings-bar" id="bar-month" style="width:0%"></div></div>
+        <div class="earnings-val" id="val-month">0 ⭐</div>
+      </div>
+      <div class="earnings-row">
+        <div class="earnings-label">Год</div>
+        <div class="earnings-bar-wrap"><div class="earnings-bar" id="bar-year" style="width:0%"></div></div>
+        <div class="earnings-val" id="val-year">0 ⭐</div>
+      </div>
+      <div class="earnings-row">
+        <div class="earnings-label">Всего</div>
+        <div class="earnings-bar-wrap"><div class="earnings-bar" id="bar-total" style="width:100%"></div></div>
+        <div class="earnings-val" id="val-total">0 ⭐</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📈 Активность</div>
+    <div class="stat-grid" style="margin-bottom:0">
+      <div class="stat-item green">
+        <div class="stat-value" id="stat-new-users">—</div>
+        <div class="stat-label">Новых сегодня</div>
+      </div>
+      <div class="stat-item green">
+        <div class="stat-value" id="stat-marriages">—</div>
+        <div class="stat-label">💍 Браков</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES PAGE -->
+<div id="page-features" class="page">
+  <div class="section-title">💎 Функции</div>
+  <div class="card">
+    <div class="card-title">Купленные и доступные функции</div>
+    <div class="feature-list" id="featureList">
+      <div class="loading"><div class="spinner"></div><br>Загрузка...</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="openShop()" style="margin-top:8px">
+    🛒 Открыть магазин в боте
+  </button>
+</div>
+
+<!-- TOP PAGE -->
+<div id="page-top" class="page">
+  <div class="section-title">🏆 Топ активности</div>
+  <div id="topList">
+    <div class="loading"><div class="spinner"></div><br>Загрузка...</div>
+  </div>
+</div>
+
+<!-- COMMANDS PAGE -->
+<div id="page-commands" class="page">
+  <div class="section-title">📋 Все команды</div>
+
+  <div class="cmd-section">
+    <div class="cmd-section-title">🔨 Модерация</div>
+    <div class="cmd-item"><div><div class="cmd-name">/mute @user [мин]</div><div class="cmd-desc">Замолчать пользователя</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/unmute @user</div><div class="cmd-desc">Снять мут</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/kick @user</div><div class="cmd-desc">Выгнать из чата</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/ban @user [дней]</div><div class="cmd-desc">Забанить</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/unban @user</div><div class="cmd-desc">Разбанить</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/warn @user [причина]</div><div class="cmd-desc">Предупреждение (3 → бан)</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/unwarn @user</div><div class="cmd-desc">Снять все варны</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/pin</div><div class="cmd-desc">Закрепить (ответом)</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+  </div>
+
+  <div class="cmd-section">
+    <div class="cmd-section-title">🎖 Должности</div>
+    <div class="cmd-item"><div><div class="cmd-name">/promote @user [роль]</div><div class="cmd-desc">Повысить в должности</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/demote @user</div><div class="cmd-desc">Понизить в должности</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/roles</div><div class="cmd-desc">Список всех ролей</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/whoami</div><div class="cmd-desc">Ваша текущая должность</div></div></div>
+  </div>
+
+  <div class="cmd-section">
+    <div class="cmd-section-title">🎮 Развлечения</div>
+    <div class="cmd-item"><div><div class="cmd-name">/duel @user</div><div class="cmd-desc">Интерактивная дуэль</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/luck</div><div class="cmd-desc">Рулетка 1-100</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/casino</div><div class="cmd-desc">Казино с символами</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/marry @user</div><div class="cmd-desc">Предложение брака</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/divorce</div><div class="cmd-desc">Развод</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+  </div>
+
+  <div class="cmd-section">
+    <div class="cmd-section-title">⚙️ Настройки</div>
+    <div class="cmd-item"><div><div class="cmd-name">/welcome Текст</div><div class="cmd-desc">Приветствие новых ({name}, {chat})</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/rules [Текст]</div><div class="cmd-desc">Правила чата</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/antiflood N</div><div class="cmd-desc">Авто-мут за N сообщ/10сек</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/poll Вопрос|Вар1|Вар2</div><div class="cmd-desc">Создать голосование</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/note add|get|del|list</div><div class="cmd-desc">Управление заметками</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/filter кл.слово ответ</div><div class="cmd-desc">Автоответы по словам</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+  </div>
+
+  <div class="cmd-section">
+    <div class="cmd-section-title">👤 Профиль</div>
+    <div class="cmd-item"><div><div class="cmd-name">/profile [@user]</div><div class="cmd-desc">Профиль пользователя</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/achievements</div><div class="cmd-desc">Ваши достижения</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/top</div><div class="cmd-desc">Топ активности</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/chatstats</div><div class="cmd-desc">Статистика чата</div></div></div>
+  </div>
+
+  <div class="card" style="background: rgba(233,69,96,0.1); border-color: rgba(233,69,96,0.3);">
+    <div class="card-title" style="color: var(--accent)">💡 Альтернативные команды</div>
+    <div style="font-size:13px; color: var(--text2); line-height: 1.6;">
+      Большинство команд также доступны через !<br>
+      Например: <code>!мут</code>, <code>!бан</code>, <code>!профиль</code>, <code>!казино</code>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div id="page-settings" class="page">
+  <div class="section-title">⚙️ О боте</div>
+
+  <div class="card">
+    <div class="card-title">ℹ️ Информация</div>
+    <div style="font-size:14px; line-height:1.8; color:var(--text2);">
+      <div>🤖 <b style="color:var(--text)">Yeah HQ Bot v3.0</b></div>
+      <div>📛 @YeahHQ_Bot</div>
+      <div>👑 Владелец: @Stefanwt</div>
+      <div>🌐 Язык: Русский</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 Быстрые действия</div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="btn btn-primary" onclick="tg.openTelegramLink('https://t.me/YeahHQ_Bot')">
+        💬 Открыть бота
+      </button>
+      <button class="btn btn-secondary" onclick="tg.openTelegramLink('https://t.me/YeahHQ_Bot?startgroup=true&admin=restrict_members+ban_members+pin_messages+invite_users+delete_messages+manage_chat')">
+        ➕ Добавить в группу
+      </button>
+      <button class="btn btn-secondary" onclick="sendToBot('shop')">
+        🛒 Магазин функций
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎖 Система рангов</div>
+    <div style="font-size:13px; line-height:2; color:var(--text2);">
+      <div>👑 <b>Создатель</b> — ранг 5</div>
+      <div>⚡ <b>Старший Админ</b> — ранг 4</div>
+      <div>🛡 <b>Админ</b> — ранг 3</div>
+      <div>🔨 <b>Модератор</b> — ранг 2</div>
+      <div>👤 <b>Участник</b> — ранг 1</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#0f3460');
+    tg.setBackgroundColor('#0f0f1a');
+  }
+
+  // User info
+  const user = tg?.initDataUnsafe?.user;
+  if (user) {
+    document.getElementById('userBadge').textContent =
+      (user.username ? '@' + user.username : user.first_name) + (user.is_premium ? ' ⭐' : '');
+  } else {
+    document.getElementById('userBadge').textContent = 'Guest';
+  }
+
+  // ── TABS ──
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('page-' + name).classList.add('active');
+    if (name === 'features') loadFeatures();
+    if (name === 'top') loadTop();
+    if (name === 'stats') loadStats(currentPeriod);
+  }
+
+  // ── MOCK STATS (replace with real API when backend ready) ──
+  let currentPeriod = 'day';
+  const mockStats = {
+    day:   { users: 12, groups: 47, actions: 89, earned: 15, newUsers: 3, marriages: 2, actDay:89, actWeek:234, actMonth:890 },
+    week:  { users: 67, groups: 47, actions: 234, earned: 87, newUsers: 18, marriages: 7 },
+    month: { users: 210, groups: 47, actions: 890, earned: 320, newUsers: 54, marriages: 23 },
+    year:  { users: 1250, groups: 47, actions: 5600, earned: 1890, newUsers: 340, marriages: 120 },
+    all:   { users: 1250, groups: 47, actions: 5600, earned: 2450, newUsers: 1250, marriages: 185 },
+  };
+  const earnings = { day: 15, week: 87, month: 320, year: 1890, total: 2450 };
+
+  function setPeriod(period, btn) {
+    currentPeriod = period;
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadStats(period);
+  }
+
+  function loadStats(period) {
+    const s = mockStats[period] || mockStats.all;
+    animateVal('stat-users', s.users);
+    animateVal('stat-groups', s.groups);
+    animateVal('stat-actions', s.actions);
+    animateVal('stat-earned', s.earned);
+    animateVal('stat-new-users', s.newUsers);
+    animateVal('stat-marriages', s.marriages);
+
+    // Earnings bars
+    const max = earnings.total || 1;
+    const bars = ['day','week','month','year','total'];
+    bars.forEach(p => {
+      const pct = Math.min(100, Math.round(earnings[p] / max * 100));
+      const bar = document.getElementById('bar-' + p);
+      const val = document.getElementById('val-' + p);
+      if (bar) bar.style.width = pct + '%';
+      if (val) val.textContent = earnings[p] + ' ⭐';
+    });
+  }
+
+  function animateVal(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let current = parseInt(el.textContent) || 0;
+    const step = Math.ceil(Math.abs(target - current) / 15);
+    const timer = setInterval(() => {
+      if (current < target) {
+        current = Math.min(current + step, target);
+      } else {
+        current = Math.max(current - step, target);
+      }
+      el.textContent = current;
+      if (current === target) clearInterval(timer);
+    }, 30);
+  }
+
+  // ── FEATURES ──
+  const features = [
+    { id: 'warns',        name: '⚠️ Предупреждения',      price: 50,  owned: false },
+    { id: 'welcome',      name: '👋 Авто-приветствие',    price: 30,  owned: false },
+    { id: 'rules',        name: '📜 Правила чата',        price: 20,  owned: false },
+    { id: 'antiflood',    name: '🛡️ Антифлуд',            price: 40,  owned: false },
+    { id: 'luck',         name: '🎰 Рулетка',             price: 25,  owned: false },
+    { id: 'duel',         name: '⚔️ Дуэли',              price: 60,  owned: false },
+    { id: 'poll',         name: '📊 Голосования',         price: 35,  owned: false },
+    { id: 'marry',        name: '💍 Браки',               price: 15,  owned: false },
+    { id: 'casino',       name: '🎲 Казино',              price: 45,  owned: false },
+    { id: 'achievements', name: '🏅 Достижения',          price: 30,  owned: false },
+    { id: 'pin',          name: '📌 Закреп',              price: 20,  owned: false },
+    { id: 'notes',        name: '📋 Заметки',             price: 25,  owned: false },
+    { id: 'filters',      name: '🔍 Фильтры',             price: 35,  owned: false },
+  ];
+
+  function loadFeatures() {
+    const list = document.getElementById('featureList');
+    list.innerHTML = features.map(f => `
+      <div class="feature-row">
+        <div>
+          <div class="feature-name">${f.name}</div>
+          <div class="feature-price">${f.price} ⭐</div>
+        </div>
+        ${f.owned
+          ? '<span class="badge badge-owned">✅ Куплено</span>'
+          : `<span class="badge badge-buy" onclick="buyFeature('${f.id}')">🛒 Купить</span>`
+        }
+      </div>
+    `).join('');
+  }
+
+  function buyFeature(id) {
+    sendToBot('shop');
+    tg?.showAlert(`Откройте магазин в боте для покупки функции "${id}"`);
+  }
+
+  function openShop() {
+    sendToBot('shop');
+  }
+
+  // ── TOP ──
+  function loadTop() {
+    const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+    const mockTop = [
+      { name: '@user1', score: 1240 },
+      { name: '@user2', score: 987 },
+      { name: '@user3', score: 756 },
+      { name: '@user4', score: 543 },
+      { name: '@user5', score: 421 },
+    ];
+    const list = document.getElementById('topList');
+    list.innerHTML = mockTop.map((u, i) => `
+      <div class="top-item">
+        <div class="top-rank">${medals[i]}</div>
+        <div class="top-name">${u.name}</div>
+        <div class="top-score">${u.score} очков</div>
+      </div>
+    `).join('') + `
+      <div style="text-align:center; color:var(--text2); font-size:12px; padding:12px 0;">
+        Актуальные данные — в боте: <b>/top</b>
+      </div>
+    `;
+  }
+
+  // ── SEND DATA TO BOT ──
+  function sendToBot(action) {
+    if (tg) {
+      tg.sendData(JSON.stringify({ action }));
+    }
+  }
+
+  // Init
+  loadStats('day');
+</script>
+</body>
+</html>
