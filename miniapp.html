@@ -7,14 +7,15 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: #0f0f1a;
-      --surface: #1a1a2e;
-      --surface2: #16213e;
-      --accent: #e94560;
-      --accent2: #0f3460;
-      --text: #eaeaea;
-      --text2: #8888aa;
-      --green: #4caf50;
+      --bg: #0a1628;
+      --surface: #0f2040;
+      --surface2: #0d1a35;
+      --accent: #1e90ff;
+      --accent2: #0050c8;
+      --accent-light: #4db8ff;
+      --text: #e8f0fe;
+      --text2: #6b8fcc;
+      --green: #00d084;
       --gold: #ffd700;
       --radius: 14px;
     }
@@ -418,56 +419,58 @@
 
   <div class="cmd-section">
     <div class="cmd-section-title">🔨 Модерация</div>
-    <div class="cmd-item"><div><div class="cmd-name">/mute @user [мин]</div><div class="cmd-desc">Замолчать пользователя</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/unmute @user</div><div class="cmd-desc">Снять мут</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/kick @user</div><div class="cmd-desc">Выгнать из чата</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/ban @user [дней]</div><div class="cmd-desc">Забанить</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/unban @user</div><div class="cmd-desc">Разбанить</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/warn @user [причина]</div><div class="cmd-desc">Предупреждение (3 → бан)</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/mute @user [мин]</div><div class="cmd-desc">Замолчать пользователя <i>(!мут)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/unmute @user</div><div class="cmd-desc">Снять мут <i>(!размут)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/kick @user</div><div class="cmd-desc">Выгнать из чата <i>(!кик)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/ban @user [дней]</div><div class="cmd-desc">Забанить <i>(!бан)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/unban @user</div><div class="cmd-desc">Разбанить <i>(!разбан)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/warn @user [причина]</div><div class="cmd-desc">Предупреждение (3 → автобан) <i>(!варн)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
     <div class="cmd-item"><div><div class="cmd-name">/unwarn @user</div><div class="cmd-desc">Снять все варны</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/pin</div><div class="cmd-desc">Закрепить (ответом)</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/pin</div><div class="cmd-desc">Закрепить сообщение (ответом)</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
   </div>
 
   <div class="cmd-section">
     <div class="cmd-section-title">🎖 Должности</div>
-    <div class="cmd-item"><div><div class="cmd-name">/promote @user [роль]</div><div class="cmd-desc">Повысить в должности</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/demote @user</div><div class="cmd-desc">Понизить в должности</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/roles</div><div class="cmd-desc">Список всех ролей</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/promote @user [роль|0-5]</div><div class="cmd-desc">Повысить. Можно указать цифру 0-5 <i>(!повысить)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/demote @user</div><div class="cmd-desc">Разжаловать до Игрока <i>(!разжаловать)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/roles</div><div class="cmd-desc">Список всех ролей в чате <i>(!роли)</i></div></div></div>
     <div class="cmd-item"><div><div class="cmd-name">/whoami</div><div class="cmd-desc">Ваша текущая должность</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/nick [текст|@user]</div><div class="cmd-desc">Установить/посмотреть ник <i>(!ник)</i></div></div></div>
   </div>
 
   <div class="cmd-section">
     <div class="cmd-section-title">🎮 Развлечения</div>
     <div class="cmd-item"><div><div class="cmd-name">/duel @user</div><div class="cmd-desc">Интерактивная дуэль</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/luck</div><div class="cmd-desc">Рулетка 1-100</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/casino</div><div class="cmd-desc">Казино с символами</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/marry @user</div><div class="cmd-desc">Предложение брака</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/divorce</div><div class="cmd-desc">Развод</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/luck</div><div class="cmd-desc">Рулетка 1-100 <i>(!рулетка)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/casino</div><div class="cmd-desc">Казино с символами <i>(!казино)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/marry @user</div><div class="cmd-desc">Предложение брака <i>(!+брак)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/divorce</div><div class="cmd-desc">Развод <i>(!развод)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/marriages</div><div class="cmd-desc">Все пары в чате <i>(!браки)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
   </div>
 
   <div class="cmd-section">
     <div class="cmd-section-title">⚙️ Настройки</div>
     <div class="cmd-item"><div><div class="cmd-name">/welcome Текст</div><div class="cmd-desc">Приветствие новых ({name}, {chat})</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/rules [Текст]</div><div class="cmd-desc">Правила чата</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/rules [Текст]</div><div class="cmd-desc">Правила чата <i>(!правила)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
     <div class="cmd-item"><div><div class="cmd-name">/antiflood N</div><div class="cmd-desc">Авто-мут за N сообщ/10сек</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
     <div class="cmd-item"><div><div class="cmd-name">/poll Вопрос|Вар1|Вар2</div><div class="cmd-desc">Создать голосование</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/note add|get|del|list</div><div class="cmd-desc">Управление заметками</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/filter кл.слово ответ</div><div class="cmd-desc">Автоответы по словам</div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/note add|get|del|list</div><div class="cmd-desc">Управление заметками <i>(!заметка)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/filter кл.слово ответ</div><div class="cmd-desc">Автоответы по словам <i>(!фильтр)</i></div></div><div class="cmd-paid">💛 ПЛАТНО</div></div>
   </div>
 
   <div class="cmd-section">
     <div class="cmd-section-title">👤 Профиль</div>
-    <div class="cmd-item"><div><div class="cmd-name">/profile [@user]</div><div class="cmd-desc">Профиль пользователя</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/achievements</div><div class="cmd-desc">Ваши достижения</div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/top</div><div class="cmd-desc">Топ активности</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/profile [@user]</div><div class="cmd-desc">Профиль пользователя <i>(!профиль)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/achievements</div><div class="cmd-desc">Ваши достижения <i>(!достижения)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/top</div><div class="cmd-desc">Топ активности <i>(!топ)</i></div></div></div>
     <div class="cmd-item"><div><div class="cmd-name">/chatstats</div><div class="cmd-desc">Статистика чата</div></div></div>
   </div>
 
-  <div class="card" style="background: rgba(233,69,96,0.1); border-color: rgba(233,69,96,0.3);">
-    <div class="card-title" style="color: var(--accent)">💡 Альтернативные команды</div>
+  <div class="card" style="background: rgba(30,144,255,0.1); border-color: rgba(30,144,255,0.3);">
+    <div class="card-title" style="color: var(--accent-light)">💡 Альтернативные команды</div>
     <div style="font-size:13px; color: var(--text2); line-height: 1.6;">
-      Большинство команд также доступны через !<br>
-      Например: <code>!мут</code>, <code>!бан</code>, <code>!профиль</code>, <code>!казино</code>
+      Большинство команд также доступны через <b>!</b><br>
+      Например: <code>!мут @user</code>, <code>!бан @user 3</code>, <code>!ник МойНик</code>
     </div>
   </div>
 </div>
@@ -489,26 +492,38 @@
   <div class="card">
     <div class="card-title">🚀 Быстрые действия</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button class="btn btn-primary" onclick="tg.openTelegramLink('https://t.me/YeahHQ_Bot')">
+      <button class="btn btn-primary" onclick="openBot()">
         💬 Открыть бота
       </button>
-      <button class="btn btn-secondary" onclick="tg.openTelegramLink('https://t.me/YeahHQ_Bot?startgroup=true&admin=restrict_members+ban_members+pin_messages+invite_users+delete_messages+manage_chat')">
+      <button class="btn btn-secondary" onclick="addToGroup()">
         ➕ Добавить в группу
       </button>
-      <button class="btn btn-secondary" onclick="sendToBot('shop')">
+      <button class="btn btn-secondary" onclick="openShop()">
         🛒 Магазин функций
       </button>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">🎖 Система рангов</div>
+    <div class="card-title">🎖 Иерархия рангов</div>
     <div style="font-size:13px; line-height:2; color:var(--text2);">
-      <div>👑 <b>Создатель</b> — ранг 5</div>
-      <div>⚡ <b>Старший Админ</b> — ранг 4</div>
-      <div>🛡 <b>Админ</b> — ранг 3</div>
-      <div>🔨 <b>Модератор</b> — ранг 2</div>
-      <div>👤 <b>Участник</b> — ранг 1</div>
+      <div>👑 <b>Создатель</b> — ранг 5 (владелец группы)</div>
+      <div>⚡ <b>Ст. Админ</b> — ранг 4</div>
+      <div>🛡 <b>Админ</b> — ранг 3 (TG-администраторы)</div>
+      <div>🔰 <b>Мл. Админ</b> — ранг 2</div>
+      <div>🔨 <b>Модератор</b> — ранг 1</div>
+      <div>👤 <b>Игрок</b> — ранг 0 (по умолчанию)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Правила повышения</div>
+    <div style="font-size:12px; line-height:1.7; color:var(--text2);">
+      • Владелец группы автоматически = Создатель(5)<br>
+      • TG-администраторы автоматически = Админ(3)<br>
+      • Создатели могут повышать до своего ранга<br>
+      • Понижать Создателя может только владелец группы<br>
+      • <code>/promote @user 5</code> — повысить сразу до нужного ранга
     </div>
   </div>
 </div>
@@ -518,8 +533,8 @@
   if (tg) {
     tg.ready();
     tg.expand();
-    tg.setHeaderColor('#0f3460');
-    tg.setBackgroundColor('#0f0f1a');
+    tg.setHeaderColor('#0050c8');
+    tg.setBackgroundColor('#0a1628');
   }
 
   // User info
@@ -635,10 +650,6 @@
     tg?.showAlert(`Откройте магазин в боте для покупки функции "${id}"`);
   }
 
-  function openShop() {
-    sendToBot('shop');
-  }
-
   // ── TOP ──
   function loadTop() {
     const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
@@ -665,9 +676,37 @@
 
   // ── SEND DATA TO BOT ──
   function sendToBot(action) {
-    if (tg) {
-      tg.sendData(JSON.stringify({ action }));
+    if (tg && tg.sendData) {
+      try {
+        tg.sendData(JSON.stringify({ action }));
+      } catch(e) {
+        // If sendData fails (not opened from bot), open bot directly
+        if (tg.openTelegramLink) {
+          tg.openTelegramLink('https://t.me/YeahHQ_Bot');
+        }
+      }
     }
+  }
+
+  function openBot() {
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink('https://t.me/YeahHQ_Bot');
+    } else {
+      window.open('https://t.me/YeahHQ_Bot', '_blank');
+    }
+  }
+
+  function addToGroup() {
+    const url = 'https://t.me/YeahHQ_Bot?startgroup=true&admin=restrict_members+ban_members+pin_messages+invite_users+delete_messages+manage_chat';
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  function openShop() {
+    sendToBot('shop');
   }
 
   // Init

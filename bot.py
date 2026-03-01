@@ -38,13 +38,16 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════════
 
 ROLES_HIERARCHY = [
-    {"name": "Участник",      "rank": 1, "emoji": "👤"},
-    {"name": "Модератор",     "rank": 2, "emoji": "🔨"},
-    {"name": "Админ",         "rank": 3, "emoji": "🛡"},
-    {"name": "Старший админ", "rank": 4, "emoji": "⚡"},
-    {"name": "Создатель",     "rank": 5, "emoji": "👑"},
+    {"name": "Игрок",      "rank": 0, "emoji": "👤"},
+    {"name": "Модератор",  "rank": 1, "emoji": "🔨"},
+    {"name": "Мл. Админ", "rank": 2, "emoji": "🔰"},
+    {"name": "Админ",      "rank": 3, "emoji": "🛡"},
+    {"name": "Ст. Админ",  "rank": 4, "emoji": "⚡"},
+    {"name": "Создатель",  "rank": 5, "emoji": "👑"},
 ]
 RANK_BY_NAME = {r["name"].lower(): r for r in ROLES_HIERARCHY}
+# Also allow numeric rank lookup
+RANK_BY_NUMBER = {r["rank"]: r for r in ROLES_HIERARCHY}
 
 active_duels: dict = {}
 flood_tracker: dict = {}
@@ -64,14 +67,16 @@ async def get_rank(chat_id, user_id, context) -> int:
     if db.is_bot_owner(user_id):
         return 9999
     if chat_id is None:
-        return 1
+        return 0
     status = await get_tg_status(chat_id, user_id, context)
     if status == ChatMemberStatus.OWNER:
         return 1000
     if status == ChatMemberStatus.ADMINISTRATOR:
-        return 900
+        # TG admins get at least rank 3 (Админ) in bot
+        role = db.get_role(chat_id, user_id)
+        return max(role["rank"] if role else 0, 3)
     role = db.get_role(chat_id, user_id)
-    return role["rank"] if role else 1
+    return role["rank"] if role else 0
 
 async def can_act(acting_id, target_id, chat_id, context):
     if db.is_bot_owner(target_id):
@@ -156,53 +161,54 @@ COMMANDS_SECTIONS = {
     "cmd_section_mod": {
         "title": "🔨 Модерация",
         "commands": [
-            ("🔇 Замутить", "/mute @user [мин]"),
-            ("🔊 Размутить", "/unmute @user"),
-            ("👢 Кикнуть", "/kick @user"),
-            ("🚫 Забанить", "/ban @user [дней]"),
-            ("✅ Разбанить", "/unban @user"),
-            ("⚠️ Предупреждение (платно)", "/warn @user [причина]", True),
-            ("🧹 Снять варны (платно)", "/unwarn @user", True),
+            ("🔇 Замутить", "/mute @user [мин]", False, "!мут"),
+            ("🔊 Размутить", "/unmute @user", False, "!размут"),
+            ("👢 Кикнуть", "/kick @user", False, "!кик"),
+            ("🚫 Забанить", "/ban @user [дней]", False, "!бан"),
+            ("✅ Разбанить", "/unban @user", False, "!разбан"),
+            ("⚠️ Предупреждение (платно)", "/warn @user [причина]", True, "!варн"),
+            ("🧹 Снять варны (платно)", "/unwarn @user", True, None),
         ]
     },
     "cmd_section_roles": {
         "title": "🎖 Должности",
         "commands": [
-            ("⬆️ Повысить", "/promote @user [роль]"),
-            ("⬇️ Понизить", "/demote @user"),
-            ("👥 Список ролей", "/roles"),
-            ("🆔 Моя должность", "/whoami"),
+            ("⬆️ Повысить", "/promote @user [роль|0-5]", False, "!повысить"),
+            ("⬇️ Разжаловать", "/demote @user", False, "!разжаловать"),
+            ("👥 Список ролей", "/roles", False, "!роли"),
+            ("🆔 Моя должность", "/whoami", False, None),
+            ("🏷 Ник", "/nick [текст|@user]", False, "!ник"),
         ]
     },
     "cmd_section_fun": {
         "title": "🎮 Развлечения",
         "commands": [
-            ("⚔️ Дуэль (платно)", "/duel @user", True),
-            ("🎰 Рулетка (платно)", "/luck", True),
-            ("🎲 Казино (платно)", "/casino", True),
-            ("💍 Предложение (платно)", "/marry @user", True),
-            ("💔 Развод (платно)", "/divorce", True),
-            ("💑 Пары (платно)", "/marriages", True),
+            ("⚔️ Дуэль (платно)", "/duel @user", True, None),
+            ("🎰 Рулетка (платно)", "/luck", True, "!рулетка"),
+            ("🎲 Казино (платно)", "/casino", True, "!казино"),
+            ("💍 Предложение (платно)", "/marry @user", True, "!+брак"),
+            ("💔 Развод (платно)", "/divorce", True, "!развод"),
+            ("💑 Пары (платно)", "/marriages", True, "!браки"),
         ]
     },
     "cmd_section_settings": {
         "title": "⚙️ Настройки",
         "commands": [
-            ("👋 Приветствие (платно)", "/welcome Текст", True),
-            ("📜 Правила (платно)", "/rules Текст", True),
-            ("🛡️ Антифлуд (платно)", "/antiflood N", True),
-            ("📊 Голосование (платно)", "/poll Вопрос|Вар1|Вар2", True),
-            ("📌 Заметки (платно)", "/note [add|get|del|list]", True),
-            ("🔍 Фильтры (платно)", "/filter keyword ответ", True),
+            ("👋 Приветствие (платно)", "/welcome Текст", True, None),
+            ("📜 Правила (платно)", "/rules [Текст]", True, "!правила"),
+            ("🛡️ Антифлуд (платно)", "/antiflood N", True, None),
+            ("📊 Голосование (платно)", "/poll Вопрос|Вар1|Вар2", True, None),
+            ("📌 Заметки (платно)", "/note add|get|del|list", True, "!заметка"),
+            ("🔍 Фильтры (платно)", "/filter слово ответ", True, "!фильтр"),
         ]
     },
     "cmd_section_profile": {
         "title": "👤 Профиль & Статистика",
         "commands": [
-            ("👤 Профиль", "/profile [@user]"),
-            ("🏅 Достижения", "/achievements"),
-            ("🏆 Топ активности", "/top"),
-            ("📊 Статистика чата", "/chatstats"),
+            ("👤 Профиль", "/profile [@user]", False, "!профиль"),
+            ("🏅 Достижения", "/achievements", False, "!достижения"),
+            ("🏆 Топ активности", "/top", False, "!топ"),
+            ("📊 Статистика чата", "/chatstats", False, None),
         ]
     },
 }
@@ -235,23 +241,26 @@ async def commands_section_cb(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not section:
         return
 
-    kb = []
-    has_premium = False
+    # Build text list of commands
+    lines = [f"{section['title']}\n"]
     for cmd_info in section["commands"]:
         name = cmd_info[0]
         usage = cmd_info[1]
         is_premium = len(cmd_info) > 2 and cmd_info[2]
-        if is_premium:
-            has_premium = True
-        kb.append([InlineKeyboardButton(name, callback_data=f"cmd_info:{usage}")])
+        alias = cmd_info[3] if len(cmd_info) > 3 else None
+        premium_tag = " 💛" if is_premium else ""
+        alias_str = f"  <i>({alias})</i>" if alias else ""
+        lines.append(f"<code>{usage}</code>{alias_str}{premium_tag}")
 
-    kb.append([InlineKeyboardButton("🔙 К разделам", callback_data="back_to_commands")])
+    kb = [
+        [InlineKeyboardButton("🔙 К разделам", callback_data="back_to_commands")],
+    ]
+    has_premium = any(len(c) > 2 and c[2] for c in section["commands"])
     if has_premium:
         kb.append([InlineKeyboardButton("🛒 Купить платные функции", callback_data="open_shop")])
 
     await q.edit_message_text(
-        f"{section['title']}\n\nВыберите команду для справки:\n"
-        "<i>(платно) = платная функция</i>",
+        "\n".join(lines) + "\n\n<i>💛 = платная функция</i>",
         parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(kb)
     )
@@ -316,7 +325,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👋 Привет, <b>{user.first_name}</b>! Добро пожаловать в <b>Yeah HQ Bot</b> 🎉\n\n"
             "Я — продвинутый менеджер для Telegram-групп. Вот что я умею:\n\n"
             "🔨 <b>Модерация</b> — мут, бан, кик, варны с автобаном на 3-м предупреждении\n"
-            "🎖 <b>Система рангов</b> — 5 уровней: Участник, Модератор, Админ, Ст. Админ, Создатель\n"
+            "🎖 <b>Система рангов</b> — 6 уровней: Игрок(0), Модератор(1), Мл.Админ(2), Админ(3), Ст.Админ(4), Создатель(5)\n"
             "⚔️ <b>Дуэли</b> — интерактивные бои с HP, прицеливанием и уклонением\n"
             "💍 <b>Браки</b> — предложение руки и сердца прямо в чате\n"
             "🎰 <b>Казино & Рулетка</b> — развлечения для активных участников\n"
@@ -637,34 +646,58 @@ async def promote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ar = await get_rank(chat.id, acting.id, context)
     tr = await get_rank(chat.id, target.id, context)
+    a_status = await get_tg_status(chat.id, acting.id, context)
+
+    if db.is_bot_owner(target.id):
+        return await answer_text(update, "❌ Этот пользователь — <b>владелец бота</b>.")
 
     if ar <= tr:
         return await answer_text(update, "❌ Нельзя повысить участника с равным или более высоким рангом.")
 
     idx = 0 if update.message.reply_to_message else 1
-    desired_name = " ".join(context.args[idx:]).strip().lower() if context.args and len(context.args) > idx else None
+    desired_arg = " ".join(context.args[idx:]).strip() if context.args and len(context.args) > idx else None
 
-    if desired_name:
-        role = RANK_BY_NAME.get(desired_name)
-        if not role:
-            names = ", ".join(r["name"] for r in ROLES_HIERARCHY)
-            return await answer_text(update, f"❌ Должность не найдена.\nДоступные: {names}")
-        if role["rank"] >= ar:
-            return await answer_text(update, "❌ Нельзя назначить должность, равную или выше вашей.")
-        if role["rank"] <= tr:
+    # Determine target new role
+    new_role = None
+    if desired_arg:
+        # Check if numeric
+        if desired_arg.isdigit():
+            rank_num = int(desired_arg)
+            new_role = RANK_BY_NUMBER.get(rank_num)
+            if not new_role:
+                names = ", ".join(f"{r['name']}({r['rank']})" for r in ROLES_HIERARCHY)
+                return await answer_text(update, f"❌ Неверный номер ранга.\nДоступные: {names}")
+        else:
+            new_role = RANK_BY_NAME.get(desired_arg.lower())
+            if not new_role:
+                names = ", ".join(f"{r['name']}({r['rank']})" for r in ROLES_HIERARCHY)
+                return await answer_text(update, f"❌ Должность не найдена.\nДоступные: {names}")
+
+        cur = db.get_role(chat.id, target.id)
+        cur_r = cur["rank"] if cur else 0
+        if new_role["rank"] <= cur_r:
             return await answer_text(update, "❌ Указанная должность не выше текущей. Для понижения — /demote.")
-        new_role = role
     else:
         cur = db.get_role(chat.id, target.id)
-        cur_r = cur["rank"] if cur else 1
+        cur_r = cur["rank"] if cur else 0
         next_r = cur_r + 1
         if next_r > 5:
             return await answer_text(update, "❌ Участник уже на максимальной должности.")
-        if next_r >= ar:
-            return await answer_text(update, "❌ Следующая должность равна или выше вашей.")
-        new_role = next((r for r in ROLES_HIERARCHY if r["rank"] == next_r), None)
+        new_role = RANK_BY_NUMBER.get(next_r)
         if not new_role:
             return await answer_text(update, "❌ Достигнут максимальный ранг.")
+
+    # Permission checks for rank 5 (Создатель)
+    if new_role["rank"] >= 5:
+        # Only group owner or bot owner can promote to Creator
+        if a_status != ChatMemberStatus.OWNER and not db.is_bot_owner(acting.id):
+            return await answer_text(update, "❌ Назначать <b>Создателя</b> может только владелец группы.")
+    else:
+        # Создатели (rank 5) can promote up to their level (but not to 5)
+        # Others can promote up to (their rank - 1)
+        max_promote = ar if ar >= 1000 else ar - 1
+        if new_role["rank"] > max_promote:
+            return await answer_text(update, "❌ Нельзя назначить должность, равную или выше вашей.")
 
     db.set_role(chat.id, target.id, new_role["name"], new_role["rank"])
     db.ensure_user(target.id, target.username or "")
@@ -678,13 +711,31 @@ async def demote_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Укажите пользователя.")
-    ok, reason = await can_act(acting.id, target.id, chat.id, context)
-    if not ok:
-        return await answer_text(update, reason)
-    role = db.get_role(chat.id, target.id)
-    if not role or role["rank"] <= 1:
-        return await answer_text(update, "❌ Участник уже на минимальной должности.")
-    prev = next((r for r in ROLES_HIERARCHY if r["rank"] == role["rank"] - 1), ROLES_HIERARCHY[0])
+
+    ar = await get_rank(chat.id, acting.id, context)
+    tr = await get_rank(chat.id, target.id, context)
+
+    if db.is_bot_owner(target.id):
+        return await answer_text(update, "❌ Этот пользователь — <b>владелец бота</b> и защищён от любых действий.")
+
+    t_status = await get_tg_status(chat.id, target.id, context)
+    a_status = await get_tg_status(chat.id, acting.id, context)
+    if t_status == ChatMemberStatus.ADMINISTRATOR and a_status != ChatMemberStatus.OWNER and not db.is_bot_owner(acting.id):
+        return await answer_text(update, "❌ Telegram-администратора может понижать только <b>владелец группы</b>.")
+
+    if ar <= tr:
+        return await answer_text(update, "❌ Нельзя применять действия к участнику с <b>равным или более высоким</b> рангом.")
+
+    # Создатели (rank 5) не могут понижать — только владелец группы или бот-владелец
+    t_role = db.get_role(chat.id, target.id)
+    t_real_rank = t_role["rank"] if t_role else 0
+    if t_real_rank >= 5 and a_status != ChatMemberStatus.OWNER and not db.is_bot_owner(acting.id):
+        return await answer_text(update, "❌ Понижать <b>Создателя</b> может только владелец группы.")
+
+    if t_real_rank <= 0:
+        return await answer_text(update, "❌ Участник уже на минимальной должности (Игрок).")
+
+    prev = next((r for r in ROLES_HIERARCHY if r["rank"] == t_real_rank - 1), ROLES_HIERARCHY[0])
     db.set_role(chat.id, target.id, prev["name"], prev["rank"])
     await answer_text(update,
         f"⬇️ {target.mention_html()} понижен до <b>{prev['emoji']} {prev['name']}</b>.")
@@ -698,6 +749,46 @@ async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for r in chat_roles:
         by_rank.setdefault(r["rank"], []).append(r)
 
+    # Add TG owner and admins from Telegram
+    try:
+        tg_admins = await context.bot.get_chat_administrators(chat.id)
+        for admin in tg_admins:
+            u = admin.user
+            if admin.status == ChatMemberStatus.OWNER:
+                # Group owner = Создатель (rank 5) in bot
+                existing = db.get_role(chat.id, u.id)
+                if not existing or existing["rank"] < 5:
+                    by_rank.setdefault(5, []).append({
+                        "user_id": u.id,
+                        "username": u.username or "",
+                        "role_name": "Создатель",
+                        "rank": 5,
+                        "_tg_owner": True
+                    })
+            elif admin.status == ChatMemberStatus.ADMINISTRATOR:
+                # TG admins = at least Админ (rank 3) if not already listed higher
+                existing = db.get_role(chat.id, u.id)
+                if not existing or existing["rank"] < 3:
+                    by_rank.setdefault(3, []).append({
+                        "user_id": u.id,
+                        "username": u.username or "",
+                        "role_name": "Админ",
+                        "rank": 3,
+                        "_tg_admin": True
+                    })
+    except Exception:
+        pass
+
+    # Deduplicate by user_id within each rank level
+    for rank_key in list(by_rank.keys()):
+        seen = set()
+        deduped = []
+        for m in by_rank[rank_key]:
+            if m["user_id"] not in seen:
+                seen.add(m["user_id"])
+                deduped.append(m)
+        by_rank[rank_key] = deduped
+
     text = f"👥 <b>Должности в чате «{chat.title}»:</b>\n"
     for role in reversed(ROLES_HIERARCHY):
         members = by_rank.get(role["rank"], [])
@@ -705,11 +796,12 @@ async def roles_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             continue
         names = []
         for m in members:
+            suffix = " 👑" if m.get("_tg_owner") else (" 🔧" if m.get("_tg_admin") else "")
             if m.get("username"):
-                names.append(f"@{m['username']}")
+                names.append(f"@{m['username']}{suffix}")
             else:
-                names.append(f"<code>{m['user_id']}</code>")
-        text += f"\n{role['emoji']} <b>{role['name']}:</b>\n  " + ", ".join(names) + "\n"
+                names.append(f"<code>{m['user_id']}</code>{suffix}")
+        text += f"\n{role['emoji']} <b>{role['name']} ({role['rank']}):</b>\n  " + ", ".join(names) + "\n"
 
     if not by_rank:
         text += "\nПока никому не назначены должности."
@@ -721,6 +813,76 @@ async def whoami_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     await profile_for_user(update, context, user, chat.id)
 
+@group_only
+async def nick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    /nick — показать свой ник
+    /nick текст — установить ник себе
+    /nick @user — показать ник другого игрока
+    """
+    acting = update.effective_user
+    chat = update.effective_chat
+    db.ensure_user(acting.id, acting.username or "")
+
+    # Check if reply or @mention (to view someone else's nick)
+    target = None
+    if update.message.reply_to_message:
+        target = update.message.reply_to_message.from_user
+    elif context.args:
+        first = context.args[0]
+        if first.startswith("@"):
+            ident = first.lstrip("@")
+            u = db.find_user_by_username(ident)
+            if u:
+                try:
+                    m = await context.bot.get_chat_member(chat.id, u["user_id"])
+                    target = m.user
+                except Exception:
+                    pass
+
+    if target and target.id != acting.id:
+        # View another player's nick
+        nick = db.get_nick(chat.id, target.id)
+        if nick:
+            await answer_text(update, f"🏷 Ник <b>{target.mention_html()}</b>: <b>{nick}</b>")
+        else:
+            await answer_text(update, f"🏷 У {target.mention_html()} нет ника в этой группе.")
+        return
+
+    # No target or target is self
+    if not context.args or (len(context.args) == 1 and context.args[0].startswith("@")):
+        # Show own nick
+        nick = db.get_nick(chat.id, acting.id)
+        if nick:
+            await answer_text(update, f"🏷 Ваш ник в этой группе: <b>{nick}</b>")
+        else:
+            await answer_text(update, f"🏷 У вас нет ника в этой группе.\nЧтобы установить: /nick ВашНик")
+        return
+
+    # Set nick
+    # If reply to message and args - those args are the nick text
+    # If no reply - args starting from index 0 (unless first was @mention already handled)
+    if update.message.reply_to_message and context.args:
+        new_nick = " ".join(context.args).strip()
+    elif context.args and not context.args[0].startswith("@"):
+        new_nick = " ".join(context.args).strip()
+    else:
+        new_nick = ""
+
+    if not new_nick:
+        nick = db.get_nick(chat.id, acting.id)
+        if nick:
+            await answer_text(update, f"🏷 Ваш ник: <b>{nick}</b>")
+        else:
+            await answer_text(update, "🏷 У вас нет ника. Напишите /nick ВашНик для установки.")
+        return
+
+    if len(new_nick) > 32:
+        return await answer_text(update, "❌ Ник слишком длинный (максимум 32 символа).")
+
+    db.set_nick(chat.id, acting.id, new_nick)
+    await answer_text(update, f"✅ Ваш ник установлен: <b>{new_nick}</b>")
+
 # ═══════════════════════════════════════════════════════════════════
 #  ПРОФИЛЬ
 # ═══════════════════════════════════════════════════════════════════
@@ -728,8 +890,29 @@ async def whoami_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def profile_for_user(update, context, user, chat_id):
     rank = await get_rank(chat_id, user.id, context)
     role = db.get_role(chat_id, user.id) if chat_id else None
-    role_name = role["role_name"] if role else "Участник"
-    role_emoji = next((r["emoji"] for r in ROLES_HIERARCHY if r["name"] == role_name), "👤")
+    # Determine display role
+    if chat_id:
+        tg_status = await get_tg_status(chat_id, user.id, context)
+        if tg_status == ChatMemberStatus.OWNER:
+            role_name = "Создатель"
+            role_emoji = "👑"
+        elif tg_status == ChatMemberStatus.ADMINISTRATOR:
+            if role and role["rank"] >= 3:
+                role_name = role["role_name"]
+                role_emoji = next((r["emoji"] for r in ROLES_HIERARCHY if r["name"] == role_name), "🛡")
+            else:
+                role_name = "Админ"
+                role_emoji = "🛡"
+        elif role:
+            role_name = role["role_name"]
+            role_emoji = next((r["emoji"] for r in ROLES_HIERARCHY if r["name"] == role_name), "👤")
+        else:
+            role_name = "Игрок"
+            role_emoji = "👤"
+    else:
+        role_name = role["role_name"] if role else "Игрок"
+        role_emoji = next((r["emoji"] for r in ROLES_HIERARCHY if r["name"] == role_name), "👤")
+
     warns = db.get_warns(chat_id, user.id) if chat_id else 0
     dstats = db.get_duel_stats(user.id)
     achiev = db.get_achievements(user.id)
@@ -737,6 +920,10 @@ async def profile_for_user(update, context, user, chat_id):
     is_owner = db.is_bot_owner(user.id)
     is_main = db.is_main_owner(user.id)
     owned = db.get_owned_features(user.id)
+
+    # Nick
+    nick = db.get_nick(chat_id, user.id) if chat_id else None
+    display_name = nick if nick else user.full_name
 
     if is_main:
         owner_badge = " 👑 Владелец бота"
@@ -746,10 +933,11 @@ async def profile_for_user(update, context, user, chat_id):
         owner_badge = ""
 
     text = (
-        f"👤 <b>{user.full_name}</b>{owner_badge}\n"
+        f"👤 <b>{display_name}</b>{owner_badge}\n"
         f"🆔 <code>{user.id}</code>"
-        f"{f' | @{user.username}' if user.username else ''}\n\n"
-        f"🎖 Должность: <b>{role_emoji} {role_name}</b>\n"
+        f"{f' | @{user.username}' if user.username else ''}\n"
+        f"{f'🏷 Ник: <b>{nick}</b>\n' if nick else ''}"
+        f"\n🎖 Должность: <b>{role_emoji} {role_name}</b>\n"
         f"⚠️ Предупреждения: <b>{warns}/3</b>\n"
         f"⚔️ Дуэли: {dstats['wins']}🏆 / {dstats['losses']}💀\n"
     )
@@ -758,7 +946,9 @@ async def profile_for_user(update, context, user, chat_id):
     if spouse_id:
         try:
             sm = await context.bot.get_chat_member(chat_id, spouse_id)
-            text += f"💍 Супруг(а): {sm.user.mention_html()}\n"
+            spouse_nick = db.get_nick(chat_id, spouse_id) if chat_id else None
+            spouse_name = spouse_nick if spouse_nick else sm.user.full_name
+            text += f"💍 Супруг(а): <a href='tg://user?id={spouse_id}'>{spouse_name}</a>\n"
         except Exception:
             text += f"💍 Супруг(а): <code>{spouse_id}</code>\n"
     if achiev:
@@ -974,8 +1164,10 @@ async def marry_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             pm = await context.bot.get_chat_member(chat_id, proposer_id)
             tm = await context.bot.get_chat_member(chat_id, target_id)
-            pname = pm.user.mention_html()
-            tname = tm.user.mention_html()
+            p_nick = db.get_nick(chat_id, proposer_id)
+            t_nick = db.get_nick(chat_id, target_id)
+            pname = f'<a href="tg://user?id={proposer_id}">{p_nick if p_nick else pm.user.full_name}</a>'
+            tname = f'<a href="tg://user?id={target_id}">{t_nick if t_nick else tm.user.full_name}</a>'
         except Exception:
             pname = f"<code>{proposer_id}</code>"
             tname = f"<code>{target_id}</code>"
@@ -1095,10 +1287,12 @@ async def send_duel_state(context, message, key):
     try:
         cm = await context.bot.get_chat_member(chat_id, c_id)
         tm = await context.bot.get_chat_member(chat_id, t_id)
-        c_mention = cm.user.mention_html()
-        t_mention = tm.user.mention_html()
-        c_name = cm.user.first_name
-        t_name = tm.user.first_name
+        c_nick = db.get_nick(chat_id, c_id)
+        t_nick = db.get_nick(chat_id, t_id)
+        c_name = c_nick if c_nick else cm.user.first_name
+        t_name = t_nick if t_nick else tm.user.first_name
+        c_mention = f'<a href="tg://user?id={c_id}">{c_name}</a>'
+        t_mention = f'<a href="tg://user?id={t_id}">{t_name}</a>'
     except Exception:
         c_name = f"User {c_id}"
         t_name = f"User {t_id}"
@@ -1196,8 +1390,10 @@ async def duel_action_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             wm = await context.bot.get_chat_member(chat_id, winner_id)
             lm = await context.bot.get_chat_member(chat_id, loser_id)
-            wname = wm.user.mention_html()
-            lname = lm.user.mention_html()
+            w_nick = db.get_nick(chat_id, winner_id)
+            l_nick = db.get_nick(chat_id, loser_id)
+            wname = f'<a href="tg://user?id={winner_id}">{w_nick if w_nick else wm.user.full_name}</a>'
+            lname = f'<a href="tg://user?id={loser_id}">{l_nick if l_nick else lm.user.full_name}</a>'
         except Exception:
             wname = f"<code>{winner_id}</code>"
             lname = f"<code>{loser_id}</code>"
@@ -1473,8 +1669,10 @@ async def ownerhelp_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/addowner @user — добавить совладельца\n"
         "/removeowner @user — убрать совладельца\n"
         "/botowners — список владельцев\n"
-        "/grantfree @user feature — бесплатный доступ\n"
-        "/revokefree @user feature — убрать бесплатный доступ\n"
+        "/grantfree @user feature — бесплатный доступ к 1 функции\n"
+        "/revokefree @user feature — убрать бесплатный доступ к 1 функции\n"
+        "/grantall @user — дать ВСЕ платные функции бесплатно\n"
+        "/revokeall @user — отобрать ВСЕ платные функции\n"
         "/disablechat [chat_id] — отключить бота\n"
         "/enablechat [chat_id] — включить бота\n"
         "/botstats — полная статистика\n"
@@ -1563,6 +1761,42 @@ async def revokefree_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db.set_free_grant(uid, feature, False)
     db.revoke_feature(uid, feature)
     await answer_text(update, f"✅ Бесплатный доступ к <code>{feature}</code> у <code>{uid}</code> отозван.")
+
+async def grantall_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Give all paid features for free to a user."""
+    if not db.is_bot_owner(update.effective_user.id):
+        return
+    if not context.args:
+        return await answer_text(update, "Использование: /grantall @user или ID")
+    ident = context.args[0].lstrip("@")
+    try:
+        uid = int(ident)
+    except ValueError:
+        u = db.find_user_by_username(ident)
+        if not u:
+            return await answer_text(update, "❌ Пользователь не найден. Он должен написать /start боту.")
+        uid = u["user_id"]
+    all_features = [fid for _, fid, _, _ in FEATURES_LIST]
+    db.grant_all_free(uid, all_features)
+    await answer_text(update, f"✅ Пользователю <code>{uid}</code> выданы <b>все</b> платные функции бесплатно.")
+
+async def revokeall_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Remove all paid features from a user."""
+    if not db.is_bot_owner(update.effective_user.id):
+        return
+    if not context.args:
+        return await answer_text(update, "Использование: /revokeall @user или ID")
+    ident = context.args[0].lstrip("@")
+    try:
+        uid = int(ident)
+    except ValueError:
+        u = db.find_user_by_username(ident)
+        if not u:
+            return await answer_text(update, "❌ Пользователь не найден.")
+        uid = u["user_id"]
+    all_features = [fid for _, fid, _, _ in FEATURES_LIST]
+    db.revoke_all_free(uid, all_features)
+    await answer_text(update, f"✅ Все платные функции у <code>{uid}</code> отозваны.")
 
 async def disablechat_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not db.is_bot_owner(update.effective_user.id):
@@ -1662,6 +1896,7 @@ EXCL_ALIASES = {
     "!рулетка":     luck_cmd,
     "!заметка":     note_cmd,
     "!фильтр":      filter_cmd,
+    "!ник":         nick_cmd,
 }
 
 async def exclamation_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1754,6 +1989,7 @@ def main():
     app.add_handler(CommandHandler("promote", promote_cmd))
     app.add_handler(CommandHandler("demote", demote_cmd))
     app.add_handler(CommandHandler(["roles", "admins"], roles_cmd))
+    app.add_handler(CommandHandler("nick", nick_cmd))
 
     # Заметки и фильтры
     app.add_handler(CommandHandler("note", note_cmd))
@@ -1793,6 +2029,8 @@ def main():
     app.add_handler(CommandHandler("botowners", botowners_cmd))
     app.add_handler(CommandHandler("grantfree", grantfree_cmd))
     app.add_handler(CommandHandler("revokefree", revokefree_cmd))
+    app.add_handler(CommandHandler("grantall", grantall_cmd))
+    app.add_handler(CommandHandler("revokeall", revokeall_cmd))
     app.add_handler(CommandHandler("disablechat", disablechat_cmd))
     app.add_handler(CommandHandler("enablechat", enablechat_cmd))
     app.add_handler(CommandHandler("botstats", botstats_cmd))

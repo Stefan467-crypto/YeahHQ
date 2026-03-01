@@ -123,6 +123,12 @@ def init_db():
         response TEXT,
         PRIMARY KEY (chat_id, keyword)
     );
+    CREATE TABLE IF NOT EXISTS nicknames (
+        chat_id INTEGER,
+        user_id INTEGER,
+        nick TEXT,
+        PRIMARY KEY (chat_id, user_id)
+    );
     """)
     # Migrate: add is_main column if not exists
     try:
@@ -320,6 +326,24 @@ def set_free_grant(user_id, feature, granted):
         conn.execute("INSERT OR REPLACE INTO free_grants (user_id, feature, granted) VALUES (?,?,1)", (user_id, feature))
     else:
         conn.execute("DELETE FROM free_grants WHERE user_id=? AND feature=?", (user_id, feature))
+    conn.commit()
+    conn.close()
+
+def grant_all_free(user_id, features_list):
+    """Give free access to all listed features."""
+    conn = get_conn()
+    for fid in features_list:
+        conn.execute("INSERT OR REPLACE INTO free_grants (user_id, feature, granted) VALUES (?,?,1)", (user_id, fid))
+        conn.execute("INSERT OR IGNORE INTO features (user_id, feature) VALUES (?,?)", (user_id, fid))
+    conn.commit()
+    conn.close()
+
+def revoke_all_free(user_id, features_list):
+    """Remove free access and ownership of all listed features."""
+    conn = get_conn()
+    for fid in features_list:
+        conn.execute("DELETE FROM free_grants WHERE user_id=? AND feature=?", (user_id, fid))
+        conn.execute("DELETE FROM features WHERE user_id=? AND feature=?", (user_id, fid))
     conn.commit()
     conn.close()
 
@@ -632,5 +656,25 @@ def get_filters(chat_id):
 def del_filter(chat_id, keyword):
     conn = get_conn()
     conn.execute("DELETE FROM filters WHERE chat_id=? AND keyword=? COLLATE NOCASE", (chat_id, keyword))
+    conn.commit()
+    conn.close()
+
+# ── NICKNAMES ──
+
+def set_nick(chat_id, user_id, nick):
+    conn = get_conn()
+    conn.execute("INSERT OR REPLACE INTO nicknames (chat_id, user_id, nick) VALUES (?,?,?)", (chat_id, user_id, nick))
+    conn.commit()
+    conn.close()
+
+def get_nick(chat_id, user_id):
+    conn = get_conn()
+    row = conn.execute("SELECT nick FROM nicknames WHERE chat_id=? AND user_id=?", (chat_id, user_id)).fetchone()
+    conn.close()
+    return row["nick"] if row else None
+
+def remove_nick(chat_id, user_id):
+    conn = get_conn()
+    conn.execute("DELETE FROM nicknames WHERE chat_id=? AND user_id=?", (chat_id, user_id))
     conn.commit()
     conn.close()
