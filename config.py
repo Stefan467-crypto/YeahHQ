@@ -9,10 +9,8 @@ BOT_OWNER_INITIAL_IDS = [8510342956]
 # Username бота
 BOT_USERNAME = "YeahHQ_Bot"
 
-# Mini App URL — замените YOUR-PROJECT на ваш Railway домен
-# Найти: railway.app → ваш проект → Settings → Domains
-# Пример: https://yeahhq-production.up.railway.app/miniapp
-MINI_APP_URL = "https://YOUR-PROJECT.up.railway.app/miniapp"
+# Mini App URL
+MINI_APP_URL = "https://yeahhq-production.up.railway.app/miniapp"
 
 # Порт для веб-сервера мини-приложения
 WEB_PORT = 8080

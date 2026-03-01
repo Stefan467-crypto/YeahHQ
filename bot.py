@@ -25,7 +25,7 @@ from telegram.constants import ChatMemberStatus
 from telegram.error import TelegramError
 
 import database as db
-from config import BOT_TOKEN, BOT_USERNAME, PRICES, MINI_APP_URL, WEB_PORT
+from config import BOT_TOKEN, BOT_USERNAME, PRICES, MINI_APP_URL
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -1719,7 +1719,7 @@ def run_miniapp_server():
     web_app.router.add_get("/", _miniapp_handler)  # корень тоже открывает мини-приложение
     runner = aiohttp_web.AppRunner(web_app)
     loop.run_until_complete(runner.setup())
-    site = aiohttp_web.TCPSite(runner, "0.0.0.0", WEB_PORT)
+    site = aiohttp_web.TCPSite(runner, "0.0.0.0", 8080)
     loop.run_until_complete(site.start())
     loop.run_forever()
 
@@ -1834,21 +1834,14 @@ def main():
 
     logger.info(f"✅ Yeah HQ Bot v3.0 (@{BOT_USERNAME}) запущен!")
 
-    # Запуск веб-сервера мини-приложения в отдельном потоке
+    # На Railway веб-сервер запускается на порту 8080, бот работает через polling
+    # Мини-приложение доступно по адресу: https://your-project.up.railway.app/miniapp
     web_thread = threading.Thread(target=run_miniapp_server, daemon=True)
     web_thread.start()
-    logger.info(f"🌐 Mini App сервер запущен на порту {WEB_PORT}")
+    logger.info("🌐 Mini App сервер запущен на порту 8080")
 
-    webhook_url = os.environ.get("WEBHOOK_URL", "")
-    if webhook_url:
-        app.run_webhook(
-            listen="0.0.0.0",
-            port=int(os.environ.get("PORT", 8000)),
-            webhook_url=webhook_url + "/webhook",
-            url_path="webhook"
-        )
-    else:
-        app.run_polling(drop_pending_updates=True)
+    # Бот всегда работает через polling (Railway не требует webhook)
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
