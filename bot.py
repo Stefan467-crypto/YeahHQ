@@ -2131,6 +2131,7 @@ async def auto_scan_job(context: ContextTypes.DEFAULT_TYPE):
             logger.warning(f"[auto_scan] Failed for chat_id={chat_id}: {e}")
 
 
+def main():
     db.init_db()
     app = Application.builder().token(BOT_TOKEN).build()
 
