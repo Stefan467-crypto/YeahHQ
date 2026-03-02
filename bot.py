@@ -389,7 +389,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📊 <b>Голосования</b> — быстрые опросы одной командой\n"
             "🛡️ <b>Антифлуд</b> — автоматический мут за спам\n"
             "📱 <b>Мини-приложение</b> — удобное управление прямо в Telegram\n\n"
-            "Используйте кнопки меню внизу для навигации 👇" + owner_note,
+            "Используйте кнопки меню внизу для навигации 👇\n\n"
+            "<b>⚠️ После добавления бота в группу обязательно напишите /scan — это позволит командам с @username работать корректно!</b>"
+            + owner_note,
             parse_mode="HTML",
             reply_markup=kb
         )
@@ -1729,6 +1731,31 @@ async def new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if db.is_chat_disabled(chat.id):
         return
     db.register_group(chat.id, chat.title or "")
+
+    # Check if the bot itself was just added
+    bot_added = any(m.id == context.bot.id for m in update.message.new_chat_members)
+    if bot_added:
+        # Auto-scan all admins so @username commands work immediately
+        try:
+            admins = await context.bot.get_chat_administrators(chat.id)
+            count = 0
+            for admin in admins:
+                u = admin.user
+                if u.is_bot:
+                    continue
+                db.ensure_chat_member(chat.id, u.id, u.username or "", u.full_name or "")
+                count += 1
+            await update.message.reply_text(
+                f"👋 <b>Yeah HQ Bot</b> добавлен в группу!\n\n"
+                f"🔍 Автоматически сохранено <b>{count}</b> администраторов в базу.\n"
+                f"Чтобы команды с @username работали для всех участников — напишите <b>/scan</b>.\n\n"
+                f"<b>⚠️ Рекомендуется запускать /scan каждый раз после добавления новых участников!</b>",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.warning(f"Auto-scan on bot add failed: {e}")
+        return
+
     for m in update.message.new_chat_members:
         if m.is_bot:
             continue
@@ -2079,7 +2106,31 @@ def run_miniapp_server():
 
 # ═══════════════════════════════════════════════════════════════════
 
-def main():
+async def auto_scan_job(context: ContextTypes.DEFAULT_TYPE):
+    """Автоматически сканирует все активные группы каждые 12 часов."""
+    groups = db.get_all_groups()
+    logger.info(f"[auto_scan] Starting scheduled scan for {len(groups)} groups")
+    for group in groups:
+        chat_id = group["chat_id"]
+        try:
+            admins = await context.bot.get_chat_administrators(chat_id)
+            count = 0
+            for admin in admins:
+                u = admin.user
+                if u.is_bot:
+                    continue
+                db.ensure_chat_member(chat_id, u.id, u.username or "", u.full_name or "")
+                count += 1
+            logger.info(f"[auto_scan] chat_id={chat_id}: saved {count} admins")
+            await context.bot.send_message(
+                chat_id,
+                f"🔄 <b>Авто-сканирование</b> завершено: {count} участников обновлено в базе.\nКоманды с @username актуальны.",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.warning(f"[auto_scan] Failed for chat_id={chat_id}: {e}")
+
+
     db.init_db()
     app = Application.builder().token(BOT_TOKEN).build()
 
@@ -2192,6 +2243,10 @@ def main():
     ))
 
     logger.info(f"✅ Yeah HQ Bot v3.0 (@{BOT_USERNAME}) запущен!")
+
+    # Авто-сканирование каждые 12 часов
+    app.job_queue.run_repeating(auto_scan_job, interval=43200, first=60)
+    logger.info("⏰ Авто-сканирование запланировано каждые 12 часов")
 
     # На Railway веб-сервер запускается на порту 8080, бот работает через polling
     # Мини-приложение доступно по адресу: https://your-project.up.railway.app/miniapp
