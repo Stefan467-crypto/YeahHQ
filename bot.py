@@ -2246,8 +2246,12 @@ def main():
     logger.info(f"✅ Yeah HQ Bot v3.0 (@{BOT_USERNAME}) запущен!")
 
     # Авто-сканирование каждые 12 часов
-    app.job_queue.run_repeating(auto_scan_job, interval=43200, first=60)
-    logger.info("⏰ Авто-сканирование запланировано каждые 12 часов")
+    # Авто-сканирование каждые 12 часов
+    if app.job_queue is not None:
+        app.job_queue.run_repeating(auto_scan_job, interval=43200, first=60)
+        logger.info("⏰ Авто-сканирование запланировано каждые 12 часов")
+    else:
+        logger.warning("⚠️ JobQueue недоступен — установите python-telegram-bot[job-queue]")
 
     # На Railway веб-сервер запускается на порту 8080, бот работает через polling
     # Мини-приложение доступно по адресу: https://your-project.up.railway.app/miniapp
