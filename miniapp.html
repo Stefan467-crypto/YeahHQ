@@ -17,6 +17,7 @@
       --text2: #6b8fcc;
       --green: #00d084;
       --gold: #ffd700;
+      --red: #ff4757;
       --radius: 14px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,58 +35,30 @@
       text-align: center;
       position: relative;
     }
-    .header-logo {
-      font-size: 40px;
-      line-height: 1;
-    }
-    .header-title {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin-top: 4px;
-    }
-    .header-sub {
-      font-size: 12px;
-      opacity: 0.75;
-      margin-top: 2px;
-    }
+    .header-logo { font-size: 40px; line-height: 1; }
+    .header-title { font-size: 22px; font-weight: 800; letter-spacing: 1px; margin-top: 4px; }
+    .header-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; }
     .user-badge {
-      position: absolute;
-      top: 16px;
-      right: 16px;
+      position: absolute; top: 16px; right: 16px;
       background: rgba(255,255,255,0.15);
-      border-radius: 20px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 600;
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 12px; font-weight: 600;
     }
 
     /* TABS */
     .tabs {
-      display: flex;
-      background: var(--surface);
+      display: flex; background: var(--surface);
       border-bottom: 1px solid rgba(255,255,255,0.05);
-      overflow-x: auto;
-      scrollbar-width: none;
+      overflow-x: auto; scrollbar-width: none;
     }
     .tabs::-webkit-scrollbar { display: none; }
     .tab {
-      flex: 1;
-      min-width: 70px;
-      padding: 12px 8px;
-      text-align: center;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text2);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all .2s;
-      white-space: nowrap;
+      flex: 1; min-width: 70px; padding: 12px 8px;
+      text-align: center; font-size: 11px; font-weight: 600;
+      color: var(--text2); cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap;
     }
-    .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
 
     /* PAGES */
@@ -94,197 +67,135 @@
 
     /* CARDS */
     .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 12px;
+      background: var(--surface); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 12px;
       border: 1px solid rgba(255,255,255,0.05);
     }
     .card-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      font-size: 13px; font-weight: 700; color: var(--text2);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
     }
 
     /* STAT GRID */
-    .stat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
     .stat-item {
-      background: var(--surface2);
-      border-radius: 12px;
-      padding: 14px 12px;
-      text-align: center;
+      background: var(--surface2); border-radius: 12px;
+      padding: 14px 12px; text-align: center;
     }
-    .stat-value {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-    }
-    .stat-label {
-      font-size: 11px;
-      color: var(--text2);
-      margin-top: 4px;
-    }
+    .stat-value { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
     .stat-item.gold .stat-value { color: var(--gold); }
     .stat-item.green .stat-value { color: var(--green); }
 
     /* PERIOD SELECTOR */
-    .period-btns {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
+    .period-btns { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
     .period-btn {
-      padding: 6px 14px;
-      border-radius: 20px;
+      padding: 6px 14px; border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.15);
-      background: transparent;
-      color: var(--text2);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all .2s;
+      background: transparent; color: var(--text2);
+      font-size: 12px; cursor: pointer; transition: all .2s;
     }
     .period-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: white;
-      font-weight: 600;
+      background: var(--accent); border-color: var(--accent);
+      color: white; font-weight: 600;
     }
-
-    /* FEATURE LIST */
-    .feature-list { display: flex; flex-direction: column; gap: 8px; }
-    .feature-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--surface2);
-      border-radius: 12px;
-      padding: 12px 14px;
-    }
-    .feature-name { font-size: 14px; font-weight: 600; }
-    .feature-price { font-size: 12px; color: var(--text2); }
-    .badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-owned { background: rgba(76,175,80,0.2); color: var(--green); }
-    .badge-buy { background: rgba(233,69,96,0.2); color: var(--accent); cursor: pointer; }
-
-    /* TOP LIST */
-    .top-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface2);
-      border-radius: 12px;
-      padding: 10px 14px;
-      margin-bottom: 8px;
-    }
-    .top-rank {
-      font-size: 20px;
-      width: 32px;
-      text-align: center;
-    }
-    .top-name { font-size: 14px; font-weight: 600; flex: 1; }
-    .top-score {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    /* SECTIONS */
-    .section-title {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 14px;
-    }
-
-    /* BUTTONS */
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity .2s;
-    }
-    .btn:active { opacity: 0.8; }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #ff6b6b);
-      color: white;
-    }
-    .btn-secondary {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    /* LOADING */
-    .loading {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text2);
-    }
-    .spinner {
-      display: inline-block;
-      width: 32px;
-      height: 32px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* EARNINGS CHART */
-    .earnings-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+    .earnings-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .earnings-label { font-size: 13px; color: var(--text2); width: 70px; }
     .earnings-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 10px; overflow: hidden; }
     .earnings-bar { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 4px; transition: width 0.5s ease; }
     .earnings-val { font-size: 13px; font-weight: 700; color: var(--gold); width: 50px; text-align: right; }
 
+    /* FEATURE LIST */
+    .feature-list { display: flex; flex-direction: column; gap: 8px; }
+    .feature-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface2); border-radius: 12px; padding: 12px 14px;
+    }
+    .feature-name { font-size: 14px; font-weight: 600; }
+    .feature-price { font-size: 12px; color: var(--text2); }
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-owned { background: rgba(0,208,132,0.2); color: var(--green); }
+    .badge-buy { background: rgba(30,144,255,0.2); color: var(--accent); cursor: pointer; }
+
+    /* QUICK COMMANDS */
+    .qcmd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .qcmd-btn {
+      background: var(--surface2); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 14px 10px;
+      text-align: center; cursor: pointer; transition: all .15s;
+      position: relative; overflow: hidden;
+    }
+    .qcmd-btn:active { transform: scale(0.96); opacity: 0.85; }
+    .qcmd-btn.danger { border-color: rgba(255,71,87,0.3); }
+    .qcmd-btn.danger:active { background: rgba(255,71,87,0.15); }
+    .qcmd-btn.success { border-color: rgba(0,208,132,0.3); }
+    .qcmd-btn.success:active { background: rgba(0,208,132,0.1); }
+    .qcmd-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+    .qcmd-name { font-size: 13px; font-weight: 700; }
+    .qcmd-hint { font-size: 10px; color: var(--text2); margin-top: 2px; }
+    .qcmd-copied {
+      position: absolute; inset: 0; background: rgba(0,208,132,0.9);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; opacity: 0;
+      transition: opacity .2s; pointer-events: none; border-radius: 12px;
+    }
+    .qcmd-btn.show-copied .qcmd-copied { opacity: 1; }
+
+    .rank-ladder { display: flex; flex-direction: column; gap: 6px; }
+    .rank-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2); border-radius: 10px; padding: 10px 12px;
+    }
+    .rank-emoji { font-size: 20px; width: 28px; text-align: center; }
+    .rank-info { flex: 1; }
+    .rank-name { font-size: 13px; font-weight: 700; }
+    .rank-desc { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .rank-num {
+      font-size: 20px; font-weight: 800; color: var(--accent);
+      opacity: 0.5; width: 24px; text-align: right;
+    }
+
+    /* SECTIONS */
+    .section-title { font-size: 18px; font-weight: 800; margin-bottom: 14px; }
+
+    /* BUTTONS */
+    .btn {
+      width: 100%; padding: 14px; border: none;
+      border-radius: var(--radius); font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent2), var(--accent)); color: white; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-danger { background: rgba(255,71,87,0.15); color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+
     /* COMMANDS */
     .cmd-section { margin-bottom: 16px; }
     .cmd-section-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 14px; font-weight: 700; color: var(--accent);
+      margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
     }
     .cmd-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--surface2);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 6px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface2); border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 6px;
     }
     .cmd-name { font-size: 13px; font-weight: 600; font-family: monospace; }
     .cmd-desc { font-size: 11px; color: var(--text2); margin-top: 1px; }
     .cmd-paid { font-size: 10px; color: var(--gold); font-weight: 700; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1a3a1a; color: var(--green); padding: 10px 20px;
+      border-radius: 20px; font-size: 13px; font-weight: 600;
+      opacity: 0; transition: opacity .3s; z-index: 999;
+      border: 1px solid rgba(0,208,132,0.3); pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -297,19 +208,19 @@
 </div>
 
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('stats')">
+  <div class="tab active" onclick="switchTab('stats', this)">
     <span class="tab-icon">📊</span>Статистика
   </div>
-  <div class="tab" onclick="switchTab('features')">
+  <div class="tab" onclick="switchTab('quick', this)">
+    <span class="tab-icon">⚡</span>Команды
+  </div>
+  <div class="tab" onclick="switchTab('features', this)">
     <span class="tab-icon">💎</span>Функции
   </div>
-  <div class="tab" onclick="switchTab('top')">
-    <span class="tab-icon">🏆</span>Топ
+  <div class="tab" onclick="switchTab('commands', this)">
+    <span class="tab-icon">📋</span>Справка
   </div>
-  <div class="tab" onclick="switchTab('commands')">
-    <span class="tab-icon">📋</span>Команды
-  </div>
-  <div class="tab" onclick="switchTab('settings')">
+  <div class="tab" onclick="switchTab('settings', this)">
     <span class="tab-icon">⚙️</span>Бот
   </div>
 </div>
@@ -391,13 +302,178 @@
   </div>
 </div>
 
+<!-- QUICK COMMANDS PAGE -->
+<div id="page-quick" class="page">
+  <div class="section-title">⚡ Быстрые команды</div>
+  <div style="font-size:12px; color:var(--text2); margin-bottom:14px;">
+    Нажмите кнопку — команда скопируется в буфер. Вставьте в нужный чат.
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔨 Модерация</div>
+    <div class="qcmd-grid">
+      <div class="qcmd-btn danger" onclick="copyCmd('/mute @user 10', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">🔇</span>
+        <div class="qcmd-name">Мут</div>
+        <div class="qcmd-hint">/mute @user [мин]</div>
+      </div>
+      <div class="qcmd-btn danger" onclick="copyCmd('/ban @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">🔨</span>
+        <div class="qcmd-name">Бан</div>
+        <div class="qcmd-hint">/ban @user [дней]</div>
+      </div>
+      <div class="qcmd-btn danger" onclick="copyCmd('/kick @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">👢</span>
+        <div class="qcmd-name">Кик</div>
+        <div class="qcmd-hint">/kick @user</div>
+      </div>
+      <div class="qcmd-btn danger" onclick="copyCmd('/warn @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">⚠️</span>
+        <div class="qcmd-name">Варн</div>
+        <div class="qcmd-hint">/warn @user [причина]</div>
+      </div>
+      <div class="qcmd-btn" onclick="copyCmd('/unmute @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">🔊</span>
+        <div class="qcmd-name">Размут</div>
+        <div class="qcmd-hint">/unmute @user</div>
+      </div>
+      <div class="qcmd-btn" onclick="copyCmd('/unban @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">✅</span>
+        <div class="qcmd-name">Разбан</div>
+        <div class="qcmd-hint">/unban @user</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎖 Должности</div>
+    <div class="qcmd-grid">
+      <div class="qcmd-btn success" onclick="copyCmd('/promote @user 1', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">⬆️</span>
+        <div class="qcmd-name">Повысить</div>
+        <div class="qcmd-hint">/promote @user [0-5]</div>
+      </div>
+      <div class="qcmd-btn danger" onclick="copyCmd('/demote @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">⬇️</span>
+        <div class="qcmd-name">Понизить</div>
+        <div class="qcmd-hint">/demote @user</div>
+      </div>
+      <div class="qcmd-btn danger" onclick="copyCmd('/firekick @user', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">🔻</span>
+        <div class="qcmd-name">Разжаловать</div>
+        <div class="qcmd-hint">/firekick @user → Игрок</div>
+      </div>
+      <div class="qcmd-btn" onclick="copyCmd('/staff', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">👥</span>
+        <div class="qcmd-name">Состав</div>
+        <div class="qcmd-hint">/staff</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🛠 Обслуживание</div>
+    <div class="qcmd-grid">
+      <div class="qcmd-btn success" onclick="copyCmd('/scan', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">🔍</span>
+        <div class="qcmd-name">Скан</div>
+        <div class="qcmd-hint">/scan — обновить базу</div>
+      </div>
+      <div class="qcmd-btn" onclick="copyCmd('/chatstats', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">📊</span>
+        <div class="qcmd-name">Статистика чата</div>
+        <div class="qcmd-hint">/chatstats</div>
+      </div>
+      <div class="qcmd-btn" onclick="copyCmd('/top', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">🏆</span>
+        <div class="qcmd-name">Топ активности</div>
+        <div class="qcmd-hint">/top</div>
+      </div>
+      <div class="qcmd-btn" onclick="copyCmd('/rules', this)">
+        <div class="qcmd-copied">✅ Скопировано</div>
+        <span class="qcmd-icon">📜</span>
+        <div class="qcmd-name">Правила</div>
+        <div class="qcmd-hint">/rules</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rank ladder -->
+  <div class="card">
+    <div class="card-title">🎖 Иерархия рангов</div>
+    <div class="rank-ladder">
+      <div class="rank-row">
+        <div class="rank-emoji">👑</div>
+        <div class="rank-info">
+          <div class="rank-name">Создатель</div>
+          <div class="rank-desc">Владелец группы, все права</div>
+        </div>
+        <div class="rank-num">5</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-emoji">⚡</div>
+        <div class="rank-info">
+          <div class="rank-name">Ст. Админ</div>
+          <div class="rank-desc">Может назначать до Мл. Админа</div>
+        </div>
+        <div class="rank-num">4</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-emoji">🛡</div>
+        <div class="rank-info">
+          <div class="rank-name">Админ</div>
+          <div class="rank-desc">TG-администраторы, ранг ≥ 3</div>
+        </div>
+        <div class="rank-num">3</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-emoji">🔰</div>
+        <div class="rank-info">
+          <div class="rank-name">Мл. Админ</div>
+          <div class="rank-desc">Может назначать Модераторов</div>
+        </div>
+        <div class="rank-num">2</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-emoji">🔨</div>
+        <div class="rank-info">
+          <div class="rank-name">Модератор</div>
+          <div class="rank-desc">Базовые права модерации</div>
+        </div>
+        <div class="rank-num">1</div>
+      </div>
+      <div class="rank-row">
+        <div class="rank-emoji">👤</div>
+        <div class="rank-info">
+          <div class="rank-name">Игрок</div>
+          <div class="rank-desc">По умолчанию для всех</div>
+        </div>
+        <div class="rank-num">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- FEATURES PAGE -->
 <div id="page-features" class="page">
   <div class="section-title">💎 Функции</div>
   <div class="card">
     <div class="card-title">Купленные и доступные функции</div>
     <div class="feature-list" id="featureList">
-      <div class="loading"><div class="spinner"></div><br>Загрузка...</div>
+      <div style="text-align:center;padding:20px;color:var(--text2);">Загрузка...</div>
     </div>
   </div>
   <button class="btn btn-primary" onclick="openShop()" style="margin-top:8px">
@@ -405,17 +481,9 @@
   </button>
 </div>
 
-<!-- TOP PAGE -->
-<div id="page-top" class="page">
-  <div class="section-title">🏆 Топ активности</div>
-  <div id="topList">
-    <div class="loading"><div class="spinner"></div><br>Загрузка...</div>
-  </div>
-</div>
-
-<!-- COMMANDS PAGE -->
+<!-- COMMANDS REFERENCE PAGE -->
 <div id="page-commands" class="page">
-  <div class="section-title">📋 Все команды</div>
+  <div class="section-title">📋 Справочник команд</div>
 
   <div class="cmd-section">
     <div class="cmd-section-title">🔨 Модерация</div>
@@ -431,10 +499,11 @@
 
   <div class="cmd-section">
     <div class="cmd-section-title">🎖 Должности</div>
-    <div class="cmd-item"><div><div class="cmd-name">/promote @user [роль|0-5]</div><div class="cmd-desc">Повысить. Можно указать цифру 0-5 <i>(!повысить)</i></div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/demote @user</div><div class="cmd-desc">Разжаловать до Игрока <i>(!разжаловать)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/promote @user [роль|0-5]</div><div class="cmd-desc">Повысить до ранга <i>(!повысить)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/demote @user</div><div class="cmd-desc">Понизить на 1 ступень <i>(!понизить)</i></div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/firekick @user</div><div class="cmd-desc">Разжаловать до Игрока <i>(!разжаловать)</i></div></div></div>
     <div class="cmd-item"><div><div class="cmd-name">/staff</div><div class="cmd-desc">Состав сервера (ранги 1-5) <i>(!админы)</i></div></div></div>
-    <div class="cmd-item"><div><div class="cmd-name">/whoami</div><div class="cmd-desc">Ваша текущая должность</div></div></div>
+    <div class="cmd-item"><div><div class="cmd-name">/scan</div><div class="cmd-desc">Обновить базу участников для @username поиска</div></div></div>
     <div class="cmd-item"><div><div class="cmd-name">/nick [текст|@user]</div><div class="cmd-desc">Установить/посмотреть ник <i>(!ник)</i></div></div></div>
   </div>
 
@@ -492,27 +561,9 @@
   <div class="card">
     <div class="card-title">🚀 Быстрые действия</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button class="btn btn-primary" onclick="openBot()">
-        💬 Открыть бота
-      </button>
-      <button class="btn btn-secondary" onclick="addToGroup()">
-        ➕ Добавить в группу
-      </button>
-      <button class="btn btn-secondary" onclick="openShop()">
-        🛒 Магазин функций
-      </button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🎖 Иерархия рангов</div>
-    <div style="font-size:13px; line-height:2; color:var(--text2);">
-      <div>👑 <b>Создатель</b> — ранг 5 (владелец группы)</div>
-      <div>⚡ <b>Ст. Админ</b> — ранг 4</div>
-      <div>🛡 <b>Админ</b> — ранг 3 (TG-администраторы)</div>
-      <div>🔰 <b>Мл. Админ</b> — ранг 2</div>
-      <div>🔨 <b>Модератор</b> — ранг 1</div>
-      <div>👤 <b>Игрок</b> — ранг 0 (по умолчанию)</div>
+      <button class="btn btn-primary" onclick="openBot()">💬 Открыть бота</button>
+      <button class="btn btn-secondary" onclick="addToGroup()">➕ Добавить в группу</button>
+      <button class="btn btn-secondary" onclick="openShop()">🛒 Магазин функций</button>
     </div>
   </div>
 
@@ -523,10 +574,13 @@
       • TG-администраторы автоматически = Админ(3)<br>
       • Создатели могут повышать до своего ранга<br>
       • Понижать Создателя может только владелец группы<br>
-      • <code>/promote @user 5</code> — повысить сразу до нужного ранга
+      • <code>/promote @user 5</code> — повысить сразу до нужного ранга<br>
+      • <code>/scan</code> — запустить после добавления бота!
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
   const tg = window.Telegram?.WebApp;
@@ -537,7 +591,6 @@
     tg.setBackgroundColor('#0a1628');
   }
 
-  // User info
   const user = tg?.initDataUnsafe?.user;
   if (user) {
     document.getElementById('userBadge').textContent =
@@ -547,24 +600,23 @@
   }
 
   // ── TABS ──
-  function switchTab(name) {
+  function switchTab(name, el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    el.classList.add('active');
     document.getElementById('page-' + name).classList.add('active');
     if (name === 'features') loadFeatures();
-    if (name === 'top') loadTop();
     if (name === 'stats') loadStats(currentPeriod);
   }
 
-  // ── MOCK STATS (replace with real API when backend ready) ──
+  // ── STATS (mock — replace with real API) ──
   let currentPeriod = 'day';
   const mockStats = {
-    day:   { users: 12, groups: 47, actions: 89, earned: 15, newUsers: 3, marriages: 2, actDay:89, actWeek:234, actMonth:890 },
-    week:  { users: 67, groups: 47, actions: 234, earned: 87, newUsers: 18, marriages: 7 },
-    month: { users: 210, groups: 47, actions: 890, earned: 320, newUsers: 54, marriages: 23 },
-    year:  { users: 1250, groups: 47, actions: 5600, earned: 1890, newUsers: 340, marriages: 120 },
-    all:   { users: 1250, groups: 47, actions: 5600, earned: 2450, newUsers: 1250, marriages: 185 },
+    day:   { users: 12, groups: 47, actions: 89,   earned: 15,   newUsers: 3,   marriages: 2 },
+    week:  { users: 67, groups: 47, actions: 234,  earned: 87,   newUsers: 18,  marriages: 7 },
+    month: { users: 210,groups: 47, actions: 890,  earned: 320,  newUsers: 54,  marriages: 23 },
+    year:  { users: 1250,groups:47, actions: 5600, earned: 1890, newUsers: 340, marriages: 120 },
+    all:   { users: 1250,groups:47, actions: 5600, earned: 2450, newUsers: 1250,marriages: 185 },
   };
   const earnings = { day: 15, week: 87, month: 320, year: 1890, total: 2450 };
 
@@ -583,11 +635,8 @@
     animateVal('stat-earned', s.earned);
     animateVal('stat-new-users', s.newUsers);
     animateVal('stat-marriages', s.marriages);
-
-    // Earnings bars
     const max = earnings.total || 1;
-    const bars = ['day','week','month','year','total'];
-    bars.forEach(p => {
+    ['day','week','month','year','total'].forEach(p => {
       const pct = Math.min(100, Math.round(earnings[p] / max * 100));
       const bar = document.getElementById('bar-' + p);
       const val = document.getElementById('val-' + p);
@@ -602,31 +651,48 @@
     let current = parseInt(el.textContent) || 0;
     const step = Math.ceil(Math.abs(target - current) / 15);
     const timer = setInterval(() => {
-      if (current < target) {
-        current = Math.min(current + step, target);
-      } else {
-        current = Math.max(current - step, target);
-      }
+      current = current < target
+        ? Math.min(current + step, target)
+        : Math.max(current - step, target);
       el.textContent = current;
       if (current === target) clearInterval(timer);
     }, 30);
   }
 
+  // ── COPY COMMAND ──
+  function copyCmd(cmd, btn) {
+    navigator.clipboard.writeText(cmd).then(() => {
+      btn.classList.add('show-copied');
+      showToast('📋 Скопировано: ' + cmd);
+      setTimeout(() => btn.classList.remove('show-copied'), 1200);
+    }).catch(() => {
+      // Fallback for older Telegram versions
+      showToast('Команда: ' + cmd);
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
   // ── FEATURES ──
   const features = [
-    { id: 'warns',        name: '⚠️ Предупреждения',      price: 50,  owned: false },
-    { id: 'welcome',      name: '👋 Авто-приветствие',    price: 30,  owned: false },
-    { id: 'rules',        name: '📜 Правила чата',        price: 20,  owned: false },
-    { id: 'antiflood',    name: '🛡️ Антифлуд',            price: 40,  owned: false },
-    { id: 'luck',         name: '🎰 Рулетка',             price: 25,  owned: false },
-    { id: 'duel',         name: '⚔️ Дуэли',              price: 60,  owned: false },
-    { id: 'poll',         name: '📊 Голосования',         price: 35,  owned: false },
-    { id: 'marry',        name: '💍 Браки',               price: 15,  owned: false },
-    { id: 'casino',       name: '🎲 Казино',              price: 45,  owned: false },
-    { id: 'achievements', name: '🏅 Достижения',          price: 30,  owned: false },
-    { id: 'pin',          name: '📌 Закреп',              price: 20,  owned: false },
-    { id: 'notes',        name: '📋 Заметки',             price: 25,  owned: false },
-    { id: 'filters',      name: '🔍 Фильтры',             price: 35,  owned: false },
+    { id: 'warns',        name: '⚠️ Предупреждения',   price: 50,  owned: false },
+    { id: 'welcome',      name: '👋 Авто-приветствие', price: 30,  owned: false },
+    { id: 'rules',        name: '📜 Правила чата',     price: 20,  owned: false },
+    { id: 'antiflood',    name: '🛡️ Антифлуд',         price: 40,  owned: false },
+    { id: 'luck',         name: '🎰 Рулетка',          price: 25,  owned: false },
+    { id: 'duel',         name: '⚔️ Дуэли',           price: 60,  owned: false },
+    { id: 'poll',         name: '📊 Голосования',      price: 35,  owned: false },
+    { id: 'marry',        name: '💍 Браки',            price: 15,  owned: false },
+    { id: 'casino',       name: '🎲 Казино',           price: 45,  owned: false },
+    { id: 'achievements', name: '🏅 Достижения',       price: 30,  owned: false },
+    { id: 'pin',          name: '📌 Закреп',           price: 20,  owned: false },
+    { id: 'notes',        name: '📋 Заметки',          price: 25,  owned: false },
+    { id: 'filters',      name: '🔍 Фильтры',          price: 35,  owned: false },
   ];
 
   function loadFeatures() {
@@ -639,74 +705,25 @@
         </div>
         ${f.owned
           ? '<span class="badge badge-owned">✅ Куплено</span>'
-          : `<span class="badge badge-buy" onclick="buyFeature('${f.id}')">🛒 Купить</span>`
-        }
+          : `<span class="badge badge-buy" onclick="openShop()">🛒 Купить</span>`}
       </div>
     `).join('');
   }
 
-  function buyFeature(id) {
-    sendToBot('shop');
-    tg?.showAlert(`Откройте магазин в боте для покупки функции "${id}"`);
-  }
-
-  // ── TOP ──
-  function loadTop() {
-    const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
-    const mockTop = [
-      { name: '@user1', score: 1240 },
-      { name: '@user2', score: 987 },
-      { name: '@user3', score: 756 },
-      { name: '@user4', score: 543 },
-      { name: '@user5', score: 421 },
-    ];
-    const list = document.getElementById('topList');
-    list.innerHTML = mockTop.map((u, i) => `
-      <div class="top-item">
-        <div class="top-rank">${medals[i]}</div>
-        <div class="top-name">${u.name}</div>
-        <div class="top-score">${u.score} очков</div>
-      </div>
-    `).join('') + `
-      <div style="text-align:center; color:var(--text2); font-size:12px; padding:12px 0;">
-        Актуальные данные — в боте: <b>/top</b>
-      </div>
-    `;
-  }
-
-  // ── SEND DATA TO BOT ──
-  function sendToBot(action) {
-    if (tg && tg.sendData) {
-      try {
-        tg.sendData(JSON.stringify({ action }));
-      } catch(e) {
-        // If sendData fails (not opened from bot), open bot directly
-        if (tg.openTelegramLink) {
-          tg.openTelegramLink('https://t.me/YeahHQ_Bot');
-        }
-      }
-    }
-  }
-
+  // ── LINKS ──
   function openBot() {
-    if (tg && tg.openTelegramLink) {
-      tg.openTelegramLink('https://t.me/YeahHQ_Bot');
-    } else {
-      window.open('https://t.me/YeahHQ_Bot', '_blank');
-    }
+    const url = 'https://t.me/YeahHQ_Bot';
+    tg?.openTelegramLink ? tg.openTelegramLink(url) : window.open(url, '_blank');
   }
 
   function addToGroup() {
     const url = 'https://t.me/YeahHQ_Bot?startgroup=true&admin=restrict_members+ban_members+pin_messages+invite_users+delete_messages+manage_chat';
-    if (tg && tg.openTelegramLink) {
-      tg.openTelegramLink(url);
-    } else {
-      window.open(url, '_blank');
-    }
+    tg?.openTelegramLink ? tg.openTelegramLink(url) : window.open(url, '_blank');
   }
 
   function openShop() {
-    sendToBot('shop');
+    const url = 'https://t.me/YeahHQ_Bot';
+    tg?.openTelegramLink ? tg.openTelegramLink(url) : window.open(url, '_blank');
   }
 
   // Init
