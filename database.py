@@ -714,3 +714,134 @@ def remove_nick(chat_id, user_id):
     conn.execute("DELETE FROM nicknames WHERE chat_id=? AND user_id=?", (chat_id, user_id))
     conn.commit()
     conn.close()
+
+# ── NICKS LIST ──
+
+def get_all_nicks(chat_id):
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT n.user_id, n.nick, u.username FROM nicknames n "
+        "LEFT JOIN users u ON n.user_id=u.user_id WHERE n.chat_id=? ORDER BY n.nick",
+        (chat_id,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+# ── CHAT WARNS LIST ──
+
+def get_all_warned(chat_id):
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT w.user_id, w.count, u.username FROM warns w "
+        "LEFT JOIN users u ON w.user_id=u.user_id WHERE w.chat_id=? AND w.count>0 ORDER BY w.count DESC",
+        (chat_id,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+# ── REPUTATION ──
+
+def init_reputation():
+    conn = get_conn()
+    conn.execute("""CREATE TABLE IF NOT EXISTS reputation (
+        chat_id INTEGER, user_id INTEGER, rep INTEGER DEFAULT 0,
+        PRIMARY KEY (chat_id, user_id))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS rep_cooldown (
+        chat_id INTEGER, from_id INTEGER, to_id INTEGER,
+        given_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (chat_id, from_id, to_id))""")
+    conn.commit()
+    conn.close()
+
+def get_rep(chat_id, user_id):
+    conn = get_conn()
+    row = conn.execute("SELECT rep FROM reputation WHERE chat_id=? AND user_id=?", (chat_id, user_id)).fetchone()
+    conn.close()
+    return row["rep"] if row else 0
+
+def change_rep(chat_id, user_id, delta):
+    conn = get_conn()
+    conn.execute(
+        "INSERT INTO reputation (chat_id, user_id, rep) VALUES (?,?,?) "
+        "ON CONFLICT(chat_id, user_id) DO UPDATE SET rep=rep+?",
+        (chat_id, user_id, delta, delta)
+    )
+    conn.commit()
+    conn.close()
+
+def can_give_rep(chat_id, from_id, to_id):
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT given_at FROM rep_cooldown WHERE chat_id=? AND from_id=? AND to_id=? "
+        "AND given_at > datetime('now', '-24 hours')",
+        (chat_id, from_id, to_id)
+    ).fetchone()
+    conn.close()
+    return row is None
+
+def set_rep_cooldown(chat_id, from_id, to_id):
+    conn = get_conn()
+    conn.execute(
+        "INSERT OR REPLACE INTO rep_cooldown (chat_id, from_id, to_id, given_at) VALUES (?,?,?,datetime('now'))",
+        (chat_id, from_id, to_id)
+    )
+    conn.commit()
+    conn.close()
+
+def get_top_rep(chat_id, limit=10):
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT r.user_id, r.rep, u.username FROM reputation r "
+        "LEFT JOIN users u ON r.user_id=u.user_id "
+        "WHERE r.chat_id=? ORDER BY r.rep DESC LIMIT ?", (chat_id, limit)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+# ── 8BALL ──
+
+BALL_ANSWERS = [
+    "🟢 Определённо да!", "🟢 Без сомнений!", "🟢 Скорее всего да.",
+    "🟢 Хороший знак.", "🟢 Да!", "🟡 Пока неясно, спроси позже.",
+    "🟡 Не могу предсказать.", "🟡 Сосредоточься и спроси снова.",
+    "🔴 Не рассчитывай на это.", "🔴 Мой ответ — нет.", "🔴 Очень сомнительно.",
+    "🔴 Перспективы не очень.", "🔴 Определённо нет.",
+]
+
+import random as _random
+def magic_ball():
+    return _random.choice(BALL_ANSWERS)
+
+# ── COMPLIMENTS & INSULTS ──
+
+COMPLIMENTS = [
+    "🌟 {} — настоящая звезда этого чата!",
+    "💪 {} — сильнейший участник здесь, без сомнений!",
+    "🧠 У {} интеллект просто зашкаливает!",
+    "😎 {} — самый крутой в этом чате!",
+    "🎯 {} всегда бьёт точно в цель!",
+    "🦁 Сердце льва — это про {}!",
+    "✨ {} освещает этот чат своим присутствием!",
+    "🏆 Если бы был конкурс крутости — {} бы победил(а)!",
+    "🚀 {} — человек-ракета, всегда на шаг впереди!",
+    "💎 {} — настоящий бриллиант этого чата!",
+]
+
+INSULTS = [
+    "🥔 {} сегодня особенно напоминает картошку.",
+    "🐔 {} — курица, мечтающая стать орлом.",
+    "😴 {} спит на ходу, как всегда.",
+    "🤡 {} сегодня в образе клоуна, и это видно.",
+    "🐌 {} двигается со скоростью улитки в тумане.",
+    "🪨 {} — живое доказательство, что камни умнее.",
+    "🍌 {} снова нашёл(а) способ съесть банан с кожурой.",
+    "🐑 {} просто следует за стадом, как обычно.",
+    "🎭 {} мастер делать из мухи слона.",
+    "🧻 {} — мягкий и бесполезный, как туалетная бумага.",
+]
+
+def random_compliment(name):
+    return _random.choice(COMPLIMENTS).format(name)
+
+def random_insult(name):
+    return _random.choice(INSULTS).format(name)

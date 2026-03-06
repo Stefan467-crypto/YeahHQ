@@ -500,9 +500,13 @@ async def miniapp_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @group_only
 async def mute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 1+ (Модератор) — мут до 10080 мин (7 дней)"""
     acting = update.effective_user
     chat = update.effective_chat
     db.ensure_user(acting.id, acting.username or "")
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 1:
+        return await answer_text(update, "❌ Нужен ранг <b>Модератор(1)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
@@ -513,7 +517,7 @@ async def mute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     idx = 0 if update.message.reply_to_message else 1
     if context.args and len(context.args) > idx:
         try:
-            mins = max(1, int(context.args[idx]))
+            mins = max(1, min(10080, int(context.args[idx])))
         except ValueError:
             pass
     try:
@@ -530,8 +534,12 @@ async def mute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @group_only
 async def unmute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 1+ (Модератор) — снять мут"""
     acting = update.effective_user
     chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 1:
+        return await answer_text(update, "❌ Нужен ранг <b>Модератор(1)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
@@ -542,9 +550,16 @@ async def unmute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.restrict_chat_member(
             chat.id, target.id,
             permissions=ChatPermissions(
-                can_send_messages=True, can_send_media_messages=True,
-                can_send_polls=True, can_send_other_messages=True,
-                can_add_web_page_previews=True
+                can_send_messages=True,
+                can_send_audios=True,
+                can_send_documents=True,
+                can_send_photos=True,
+                can_send_videos=True,
+                can_send_video_notes=True,
+                can_send_voice_notes=True,
+                can_send_polls=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True,
             )
         )
         db.log_action(chat.id, acting.id, target.id, "unmute", "")
@@ -554,8 +569,12 @@ async def unmute_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @group_only
 async def kick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 2+ (Мл. Админ) — кик из чата"""
     acting = update.effective_user
     chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 2:
+        return await answer_text(update, "❌ Нужен ранг <b>Мл. Админ(2)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
@@ -572,8 +591,12 @@ async def kick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @group_only
 async def ban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 3+ (Админ) — бан"""
     acting = update.effective_user
     chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 3:
+        return await answer_text(update, "❌ Нужен ранг <b>Админ(3)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
@@ -599,14 +622,15 @@ async def ban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @group_only
 async def unban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 3+ (Админ) — разбан"""
     acting = update.effective_user
     chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 3:
+        return await answer_text(update, "❌ Нужен ранг <b>Админ(3)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
-    ar = await get_rank(chat.id, acting.id, context)
-    if ar < 900:
-        return await answer_text(update, "❌ Недостаточно прав.")
     try:
         await context.bot.unban_chat_member(chat.id, target.id)
         db.log_action(chat.id, acting.id, target.id, "unban", "")
@@ -617,8 +641,12 @@ async def unban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @group_only
 @require_premium("warns")
 async def warn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 1+ (Модератор) — предупреждение"""
     acting = update.effective_user
     chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 1:
+        return await answer_text(update, "❌ Нужен ранг <b>Модератор(1)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
@@ -644,8 +672,12 @@ async def warn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @group_only
 @require_premium("warns")
 async def unwarn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 2+ (Мл. Админ) — снять варны"""
     acting = update.effective_user
     chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 2:
+        return await answer_text(update, "❌ Нужен ранг <b>Мл. Админ(2)</b> или выше.")
     target = await resolve_target(update, context)
     if not target:
         return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или попросите его написать что-нибудь в чат — после этого @username заработает.")
@@ -659,11 +691,12 @@ async def unwarn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @group_only
 @require_premium("pin")
 async def pin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 4+ (Ст. Админ) — закрепить"""
     chat = update.effective_chat
     acting = update.effective_user
     ar = await get_rank(chat.id, acting.id, context)
-    if ar < 900:
-        return await answer_text(update, "❌ Нужны права администратора.")
+    if ar < 4:
+        return await answer_text(update, "❌ Нужен ранг <b>Ст. Админ(4)</b> или выше.")
     if not update.message.reply_to_message:
         return await answer_text(update, "❌ Ответьте на сообщение которое хотите закрепить.")
     try:
@@ -675,11 +708,12 @@ async def pin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @group_only
 @require_premium("pin")
 async def unpin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ранг 4+ (Ст. Админ) — открепить"""
     chat = update.effective_chat
     acting = update.effective_user
     ar = await get_rank(chat.id, acting.id, context)
-    if ar < 900:
-        return await answer_text(update, "❌ Нужны права администратора.")
+    if ar < 4:
+        return await answer_text(update, "❌ Нужен ранг <b>Ст. Админ(4)</b> или выше.")
     try:
         if update.message.reply_to_message:
             await context.bot.unpin_chat_message(chat.id, update.message.reply_to_message.message_id)
@@ -2014,6 +2048,355 @@ async def divorceforce_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await answer_text(update, f"✅ Брак {target.mention_html()} расторгнут владельцем бота.")
 
 # ═══════════════════════════════════════════════════════════════════
+#  НОВЫЕ КОМАНДЫ
+# ═══════════════════════════════════════════════════════════════════
+
+# ── /nicks — все ники в чате ──
+@group_only
+async def nicks_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    nicks = db.get_all_nicks(chat.id)
+    if not nicks:
+        return await answer_text(update, "🏷 В этом чате пока нет никнеймов.")
+    lines = []
+    for n in nicks:
+        mention = f"@{n['username']}" if n.get("username") else f"<code>{n['user_id']}</code>"
+        lines.append(f"• <b>{n['nick']}</b> — {mention}")
+    await answer_text(update,
+        f"🏷 <b>Все ники в «{chat.title}»:</b>\n\n" + "\n".join(lines))
+
+# ── /removenick — удалить ник ──
+@group_only
+async def removenick_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    acting = update.effective_user
+    chat = update.effective_chat
+    target = await resolve_target(update, context) if context.args or update.message.reply_to_message else acting
+    if not target:
+        return await answer_text(update, "❌ Пользователь не найден.")
+    # Мод может удалять чужие ники
+    ar = await get_rank(chat.id, acting.id, context)
+    if target.id != acting.id and ar < 1:
+        return await answer_text(update, "❌ Недостаточно прав.")
+    db.remove_nick(chat.id, target.id)
+    await answer_text(update, f"🗑 Ник {target.mention_html()} удалён.")
+
+# ── /warnlist — список предупреждённых ──
+@group_only
+async def warnlist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    ar = await get_rank(chat.id, update.effective_user.id, context)
+    if ar < 1:
+        return await answer_text(update, "❌ Недостаточно прав.")
+    warned = db.get_all_warned(chat.id)
+    if not warned:
+        return await answer_text(update, "✅ Предупреждённых участников нет.")
+    lines = []
+    for w in warned:
+        mention = f"@{w['username']}" if w.get("username") else f"<code>{w['user_id']}</code>"
+        bar = "🔴" * w["count"] + "⚪" * max(0, 3 - w["count"])
+        lines.append(f"{bar} {mention} — {w['count']}/3")
+    await answer_text(update,
+        f"⚠️ <b>Предупреждения в «{chat.title}»:</b>\n\n" + "\n".join(lines))
+
+# ── /rep — репутация ──
+@group_only
+async def rep_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    db.init_reputation()
+    acting = update.effective_user
+    chat = update.effective_chat
+    target = await resolve_target(update, context)
+    if not target:
+        # Show own rep
+        r = db.get_rep(chat.id, acting.id)
+        return await answer_text(update, f"⭐ Ваша репутация в этом чате: <b>{r:+d}</b>")
+    if target.id == acting.id:
+        return await answer_text(update, "❌ Нельзя менять свою репутацию.")
+    if target.is_bot:
+        return await answer_text(update, "❌ Ботам репутация не нужна.")
+    # Determine +1 or -1
+    subcmd = context.args[1].lower() if len(context.args) > 1 else "+"
+    if subcmd in ("+", "плюс", "up"):
+        delta = 1
+        emoji = "⬆️"
+        word = "повышена"
+    elif subcmd in ("-", "минус", "down"):
+        delta = -1
+        emoji = "⬇️"
+        word = "понижена"
+    else:
+        r = db.get_rep(chat.id, target.id)
+        return await answer_text(update, f"⭐ Репутация {target.mention_html()}: <b>{r:+d}</b>")
+    if not db.can_give_rep(chat.id, acting.id, target.id):
+        return await answer_text(update, "⏳ Вы уже меняли репутацию этому игроку сегодня. Повторите через 24 часа.")
+    db.change_rep(chat.id, target.id, delta)
+    db.set_rep_cooldown(chat.id, acting.id, target.id)
+    new_rep = db.get_rep(chat.id, target.id)
+    await answer_text(update,
+        f"{emoji} Репутация {target.mention_html()} {word}!\n"
+        f"Текущая репутация: <b>{new_rep:+d}</b>")
+
+# ── /toprep — топ репутации ──
+@group_only
+async def toprep_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    db.init_reputation()
+    chat = update.effective_chat
+    rows = db.get_top_rep(chat.id)
+    if not rows:
+        return await answer_text(update, "⭐ Репутация пока никому не выставлялась.")
+    medals = ["🥇","🥈","🥉","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"]
+    lines = []
+    for i, r in enumerate(rows):
+        mention = f"@{r['username']}" if r.get("username") else f"<code>{r['user_id']}</code>"
+        lines.append(f"{medals[i]} {mention} — <b>{r['rep']:+d}</b>")
+    await answer_text(update,
+        f"⭐ <b>Топ репутации «{chat.title}»:</b>\n\n" + "\n".join(lines))
+
+# ── /8ball — магический шар ──
+async def ball_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        return await answer_text(update, "🎱 Задайте вопрос! Пример: /8ball Станет ли я богатым?")
+    question = " ".join(context.args)
+    answer = db.magic_ball()
+    await answer_text(update,
+        f"🎱 <b>Магический шар отвечает...</b>\n\n"
+        f"❓ <i>{question}</i>\n\n"
+        f"{answer}")
+
+# ── /gg — похвалить игрока ──
+@group_only
+async def gg_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    acting = update.effective_user
+    target = await resolve_target(update, context)
+    if not target or target.id == acting.id:
+        return await answer_text(update, "❌ Укажите другого участника реплаем или @username.")
+    compliment = db.random_compliment(target.mention_html())
+    await answer_text(update, f"🎉 {compliment}\n\n— от {acting.mention_html()}")
+
+# ── /ff — поддразнить ──
+@group_only
+async def ff_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    acting = update.effective_user
+    chat = update.effective_chat
+    ar = await get_rank(chat.id, acting.id, context)
+    if ar < 1:
+        return await answer_text(update, "❌ Только модераторы могут дразнить.")
+    target = await resolve_target(update, context)
+    if not target or target.id == acting.id:
+        return await answer_text(update, "❌ Укажите цель реплаем или @username.")
+    insult = db.random_insult(target.mention_html())
+    await answer_text(update, f"😈 {insult}\n\n— от {acting.mention_html()}")
+
+# ── /coinflip — орёл или решка ──
+async def coinflip_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    result = random.choice(["🦅 Орёл!", "🪙 Решка!"])
+    await answer_text(update, f"🪙 Подбрасываю монетку...\n\n<b>{result}</b>")
+
+# ── /roll — кубик ──
+async def roll_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    sides = 6
+    if context.args:
+        try:
+            sides = max(2, min(1000, int(context.args[0])))
+        except ValueError:
+            pass
+    result = random.randint(1, sides)
+    stars = min(result, sides)
+    bar = "█" * round(result / sides * 10) + "░" * (10 - round(result / sides * 10))
+    await answer_text(update,
+        f"🎲 <b>Бросок d{sides}:</b>\n\n"
+        f"[{bar}] <b>{result}</b> из {sides}")
+
+# ── /choose — выбрать из вариантов ──
+async def choose_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    if not context.args:
+        return await answer_text(update, "🤔 Укажите варианты через | или запятую.\nПример: /choose кофе | чай | сок")
+    text = " ".join(context.args)
+    if "|" in text:
+        options = [o.strip() for o in text.split("|") if o.strip()]
+    else:
+        options = [o.strip() for o in text.split(",") if o.strip()]
+    if len(options) < 2:
+        return await answer_text(update, "❌ Укажите хотя бы 2 варианта.")
+    chosen = random.choice(options)
+    listed = "\n".join(f"  {'➡️' if o == chosen else '▪️'} {o}" for o in options)
+    await answer_text(update,
+        f"🤔 <b>Выбираю из вариантов...</b>\n\n{listed}\n\n"
+        f"✅ Мой выбор: <b>{chosen}</b>")
+
+# ── /ship — совместимость ──
+@group_only
+async def ship_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random, hashlib
+    acting = update.effective_user
+    chat = update.effective_chat
+    target = await resolve_target(update, context)
+    if not target:
+        return await answer_text(update, "❌ Укажите участника реплаем или @username.")
+    if target.id == acting.id:
+        return await answer_text(update, "💘 Самовлюблённость — это 100%!")
+    # Stable hash so same pair always gets same %
+    key = str(min(acting.id, target.id)) + str(max(acting.id, target.id)) + str(chat.id)
+    pct = int(hashlib.md5(key.encode()).hexdigest(), 16) % 101
+    bar_fill = round(pct / 10)
+    bar = "❤️" * bar_fill + "🖤" * (10 - bar_fill)
+    if pct >= 80:   verdict = "💞 Это настоящая любовь!"
+    elif pct >= 60: verdict = "😊 Хорошая совместимость!"
+    elif pct >= 40: verdict = "🤝 Неплохо, но есть куда расти."
+    elif pct >= 20: verdict = "😬 Немного натянуто..."
+    else:           verdict = "💔 Катастрофа!"
+    await answer_text(update,
+        f"💘 <b>Совместимость</b>\n\n"
+        f"👤 {acting.mention_html()}\n"
+        f"👤 {target.mention_html()}\n\n"
+        f"[{bar}]\n"
+        f"<b>{pct}%</b> — {verdict}")
+
+# ── /afk — режим отсутствия ──
+_afk_users: dict = {}  # {(chat_id, user_id): reason}
+
+@group_only
+async def afk_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    chat = update.effective_chat
+    reason = " ".join(context.args) if context.args else "без причины"
+    _afk_users[(chat.id, user.id)] = (reason, datetime.now())
+    await answer_text(update,
+        f"💤 {user.mention_html()} ушёл(а) в AFK\n"
+        f"Причина: <i>{reason}</i>")
+
+async def afk_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Check AFK status on each message."""
+    if not update.message or not update.effective_user:
+        return
+    user = update.effective_user
+    chat = update.effective_chat
+    key = (chat.id, user.id)
+    # Return from AFK
+    if key in _afk_users:
+        reason, since = _afk_users.pop(key)
+        delta = datetime.now() - since
+        mins = int(delta.total_seconds() // 60)
+        await update.message.reply_text(
+            f"👋 {user.mention_html()} вернулся(ась)! Отсутствовал(а) {mins} мин.",
+            parse_mode="HTML"
+        )
+    # Notify if someone mentioned an AFK user
+    if update.message.reply_to_message:
+        rtu = update.message.reply_to_message.from_user
+        rkey = (chat.id, rtu.id)
+        if rkey in _afk_users:
+            reason, since = _afk_users[rkey]
+            delta = datetime.now() - since
+            mins = int(delta.total_seconds() // 60)
+            await update.message.reply_text(
+                f"💤 {rtu.mention_html()} сейчас в AFK ({mins} мин.)\n"
+                f"Причина: <i>{reason}</i>",
+                parse_mode="HTML"
+            )
+
+# ── /lastseen — когда последний раз писал ──
+@group_only
+async def lastseen_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    target = await resolve_target(update, context)
+    if not target:
+        return await answer_text(update, "❌ Укажите участника.")
+    conn_db = db.get_conn()
+    row = conn_db.execute(
+        "SELECT MAX(created_at) as last FROM action_log WHERE chat_id=? AND (acting_id=? OR target_id=?)",
+        (chat.id, target.id, target.id)
+    ).fetchone()
+    conn_db.close()
+    if row and row["last"]:
+        await answer_text(update,
+            f"👁 {target.mention_html()} последний раз был(а) активен(на): <b>{row['last']}</b>")
+    else:
+        await answer_text(update,
+            f"❓ Не нашёл данных об активности {target.mention_html()} в этом чате.")
+
+# ── /mywarns — свои предупреждения ──
+@group_only
+async def mywarns_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    chat = update.effective_chat
+    count = db.get_warns(chat.id, user.id)
+    bar = "🔴" * count + "⚪" * max(0, 3 - count)
+    if count == 0:
+        await answer_text(update, f"✅ {user.mention_html()}, у вас нет предупреждений!")
+    else:
+        await answer_text(update,
+            f"⚠️ {user.mention_html()}, ваши предупреждения:\n\n"
+            f"{bar} <b>{count}/3</b>\n\n"
+            f"{'🚨 Следующий варн = автобан!' if count >= 2 else 'Будьте осторожны.'}")
+
+# ── /myrep — своя репутация ──
+@group_only
+async def myrep_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    db.init_reputation()
+    user = update.effective_user
+    chat = update.effective_chat
+    r = db.get_rep(chat.id, user.id)
+    if r > 0:   emoji = "🌟"
+    elif r < 0: emoji = "💀"
+    else:       emoji = "😐"
+    await answer_text(update,
+        f"{emoji} {user.mention_html()}, ваша репутация: <b>{r:+d}</b>")
+
+# ── /活动 chatstats advanced ──
+@group_only
+async def mystats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    acting = update.effective_user
+    chat = update.effective_chat
+    target = await resolve_target(update, context) if (context.args or update.message.reply_to_message) else acting
+    if not target:
+        target = acting
+    # Activity
+    top = db.get_top_activity(chat.id, 100)
+    score = 0
+    rank_pos = "—"
+    for i, r in enumerate(top):
+        if r["user_id"] == target.id:
+            score = r["score"]
+            rank_pos = f"#{i+1}"
+            break
+    # Warns
+    warns = db.get_warns(chat.id, target.id)
+    # Duel stats
+    ds = db.get_duel_stats(target.id)
+    # Nick
+    nick = db.get_nick(chat.id, target.id)
+    # Rep
+    db.init_reputation()
+    rep = db.get_rep(chat.id, target.id)
+    nick_line = f"\n🏷 <b>Ник:</b> {nick}" if nick else ""
+    await answer_text(update,
+        f"📊 <b>Статистика {target.mention_html()}</b>{nick_line}\n\n"
+        f"💬 <b>Активность:</b> {score} очков (место {rank_pos})\n"
+        f"⚔️ <b>Дуэли:</b> {ds['wins']}W / {ds['losses']}L\n"
+        f"⭐ <b>Репутация:</b> {rep:+d}\n"
+        f"⚠️ <b>Варны:</b> {warns}/3")
+
+# ── /спор — спорим? ──
+@group_only
+async def bet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    acting = update.effective_user
+    target = await resolve_target(update, context)
+    if not target or target.id == acting.id or target.is_bot:
+        return await answer_text(update, "❌ Укажите другого участника реплаем или @username.")
+    sides = [acting, target]
+    random.shuffle(sides)
+    winner, loser = sides
+    await answer_text(update,
+        f"🎲 <b>Спор решён!</b>\n\n"
+        f"🏆 Победитель: {winner.mention_html()}\n"
+        f"😢 Проигравший: {loser.mention_html()}\n\n"
+        f"<i>Результат случайный и честный!</i>")
+
+# ═══════════════════════════════════════════════════════════════════
 #  АЛЬТЕРНАТИВНЫЕ КОМАНДЫ С !
 # ═══════════════════════════════════════════════════════════════════
 
@@ -2043,6 +2426,20 @@ EXCL_ALIASES = {
     "!заметка":     note_cmd,
     "!фильтр":      filter_cmd,
     "!ник":         nick_cmd,
+    "!ники":        nicks_cmd,
+    "!кто я":       whoami_cmd,
+    "!шар":         ball_cmd,
+    "!орел":        coinflip_cmd,
+    "!монетка":     coinflip_cmd,
+    "!кубик":       roll_cmd,
+    "!выбери":      choose_cmd,
+    "!совместимость": ship_cmd,
+    "!afk":         afk_cmd,
+    "!репа":        myrep_cmd,
+    "!мои варны":   mywarns_cmd,
+    "!спор":        bet_cmd,
+    "!хвалю":       gg_cmd,
+    "!статистика":  mystats_cmd,
 }
 
 async def exclamation_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2162,7 +2559,27 @@ def main():
     app.add_handler(CommandHandler("firekick", firekick_cmd))
     app.add_handler(CommandHandler(["staff", "admins"], staff_cmd))
     app.add_handler(CommandHandler("nick", nick_cmd))
+    app.add_handler(CommandHandler("nicks", nicks_cmd))
+    app.add_handler(CommandHandler("removenick", removenick_cmd))
     app.add_handler(CommandHandler("scan", scan_cmd))
+
+    # Новые крутые команды
+    app.add_handler(CommandHandler("warnlist", warnlist_cmd))
+    app.add_handler(CommandHandler("mywarns", mywarns_cmd))
+    app.add_handler(CommandHandler("rep", rep_cmd))
+    app.add_handler(CommandHandler("toprep", toprep_cmd))
+    app.add_handler(CommandHandler("myrep", myrep_cmd))
+    app.add_handler(CommandHandler(["8ball", "шар"], ball_cmd))
+    app.add_handler(CommandHandler(["gg", "хвалю"], gg_cmd))
+    app.add_handler(CommandHandler(["ff"], ff_cmd))
+    app.add_handler(CommandHandler(["coinflip", "монетка"], coinflip_cmd))
+    app.add_handler(CommandHandler(["roll", "кубик"], roll_cmd))
+    app.add_handler(CommandHandler(["choose", "выбери"], choose_cmd))
+    app.add_handler(CommandHandler(["ship", "совместимость"], ship_cmd))
+    app.add_handler(CommandHandler("afk", afk_cmd))
+    app.add_handler(CommandHandler("lastseen", lastseen_cmd))
+    app.add_handler(CommandHandler(["mystats", "статистика"], mystats_cmd))
+    app.add_handler(CommandHandler(["bet", "спор"], bet_cmd))
 
     # Заметки и фильтры
     app.add_handler(CommandHandler("note", note_cmd))
@@ -2233,10 +2650,14 @@ def main():
         keyboard_buttons
     ))
 
-    # Счётчик активности + антифлуд + фильтры
+    # Счётчик активности + антифлуд + фильтры + AFK
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND,
         flood_check
+    ))
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        afk_check
     ))
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND,
