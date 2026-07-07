@@ -111,6 +111,12 @@ def init_db():
         title TEXT,
         added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS gbans (
+        user_id INTEGER PRIMARY KEY,
+        reason TEXT,
+        banned_by INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS notes (
         chat_id INTEGER,
         name TEXT,
@@ -487,6 +493,35 @@ def register_group(chat_id, title):
 def get_all_groups():
     conn = get_conn()
     rows = conn.execute("SELECT * FROM bot_groups ORDER BY added_at DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+# ── GLOBAL BANS (GBAN) ──
+
+def add_gban(user_id, reason, banned_by):
+    conn = get_conn()
+    conn.execute(
+        "INSERT OR REPLACE INTO gbans (user_id, reason, banned_by) VALUES (?,?,?)",
+        (user_id, reason, banned_by)
+    )
+    conn.commit()
+    conn.close()
+
+def remove_gban(user_id):
+    conn = get_conn()
+    conn.execute("DELETE FROM gbans WHERE user_id=?", (user_id,))
+    conn.commit()
+    conn.close()
+
+def is_gbanned(user_id):
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM gbans WHERE user_id=?", (user_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_all_gbans():
+    conn = get_conn()
+    rows = conn.execute("SELECT * FROM gbans ORDER BY created_at DESC").fetchall()
     conn.close()
     return [dict(r) for r in rows]
 

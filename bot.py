@@ -224,6 +224,7 @@ COMMANDS_SECTIONS = {
             ("🧹 Снять варны (платно)",  "/unwarn @user",            True,  None),
             ("📋 Список варнов",         "/warnlist",                False, None),
             ("🔎 Мои варны",             "/mywarns",                 False, "!мои варны"),
+            ("🚨 Пожаловаться (платно)", "/report [причина]",        True,  "!жалоба"),
         ]
     },
     "cmd_section_roles": {
@@ -710,6 +711,39 @@ async def unwarn_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await answer_text(update, reason)
     db.reset_warns(chat.id, target.id)
     await answer_text(update, f"✅ Все предупреждения с {target.mention_html()} сняты.")
+
+# ── /report — пожаловаться администраторам на сообщение ──
+@group_only
+@require_premium("report")
+async def report_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat = update.effective_chat
+    acting = update.effective_user
+    if not update.message.reply_to_message:
+        return await answer_text(update, "❌ Ответьте (реплаем) на сообщение, на которое хотите пожаловаться.")
+    reported_msg = update.message.reply_to_message
+    target = reported_msg.from_user
+    if target.id == acting.id:
+        return await answer_text(update, "❌ Нельзя жаловаться на самого себя.")
+    reason = " ".join(context.args) if context.args else "не указана"
+
+    try:
+        admins = await context.bot.get_chat_administrators(chat.id)
+        mentions = " ".join(
+            a.user.mention_html() for a in admins if not a.user.is_bot
+        )
+    except Exception:
+        mentions = ""
+
+    await update.message.reply_text(
+        f"🚨 <b>Жалоба от</b> {acting.mention_html()}\n"
+        f"👤 <b>На:</b> {target.mention_html()}\n"
+        f"📝 <b>Причина:</b> {reason}\n\n"
+        f"{mentions}",
+        parse_mode="HTML",
+        reply_to_message_id=reported_msg.message_id
+    )
+    db.log_action(chat.id, acting.id, target.id, "report", reason)
+    await update.message.reply_text("✅ Жалоба отправлена администраторам.")
 
 # Пин-сообщений
 @group_only
@@ -1677,6 +1711,7 @@ FEATURES_LIST = [
     ("buy_pin",          "pin",          "📌 Закреп сообщений",    20),
     ("buy_notes",        "notes",        "📋 Заметки",             25),
     ("buy_filters",      "filters",      "🔍 Фильтры автоответа",  35),
+    ("buy_report",       "report",       "🚨 Жалобы админам",      30),
 ]
 
 async def shop_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1817,6 +1852,14 @@ async def new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for m in update.message.new_chat_members:
         if m.is_bot:
             continue
+        # Global ban enforcement: auto-kick anyone gban-ed, even in a group they just joined
+        if db.is_gbanned(m.id):
+            try:
+                await context.bot.ban_chat_member(chat.id, m.id)
+                logger.info(f"Auto-gban enforced: {m.id} in chat {chat.id}")
+            except Exception:
+                pass
+            continue
         db.ensure_chat_member(chat.id, m.id, m.username or "", m.full_name or "")
         welcome = db.get_setting(chat.id, "welcome")
         if welcome:
@@ -1880,7 +1923,10 @@ async def ownerhelp_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/enablechat [chat_id] — включить бота\n"
         "/botstats — полная статистика\n"
         "/divorceforce @user — расторгнуть любой брак\n"
-        "/allgroups — список всех групп\n\n"
+        "/allgroups — список всех групп\n"
+        "/gban @user [причина] — глобальный бан во всех группах бота\n"
+        "/ungban @user — снять глобальный бан\n"
+        "/gbanlist — список глобальных банов\n\n"
         "<b>Привилегии:</b>\n"
         "• Всегда выигрывает в дуэлях\n"
         "• Все функции бесплатны\n"
@@ -2070,6 +2116,73 @@ async def divorceforce_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         db.divorce(target.id, chat_id)
     await answer_text(update, f"✅ Брак {target.mention_html()} расторгнут владельцем бота.")
+
+# ── /gban — глобальный бан во всех группах бота (только владельцы) ──
+async def gban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not db.is_bot_owner(update.effective_user.id):
+        return
+    target = await resolve_target(update, context)
+    if not target:
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или укажите @username / ID.")
+    if db.is_bot_owner(target.id):
+        return await answer_text(update, "❌ Нельзя гбанить владельца бота.")
+    idx = 0 if update.message.reply_to_message else 1
+    reason = " ".join(context.args[idx:]) if context.args and len(context.args) > idx else "не указана"
+    db.add_gban(target.id, reason, update.effective_user.id)
+
+    groups = db.get_all_groups()
+    banned_in = 0
+    for g in groups:
+        try:
+            await context.bot.ban_chat_member(g["chat_id"], target.id)
+            banned_in += 1
+        except Exception:
+            pass
+    await answer_text(
+        update,
+        f"🌍 {target.mention_html()} получил <b>глобальный бан</b>.\n"
+        f"Причина: {reason}\n"
+        f"Забанен в <b>{banned_in}/{len(groups)}</b> группах бота.\n"
+        f"Будет автоматически забанен при попытке зайти в любую другую группу с ботом."
+    )
+
+# ── /ungban — снять глобальный бан (только владельцы) ──
+async def ungban_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not db.is_bot_owner(update.effective_user.id):
+        return
+    target = await resolve_target(update, context)
+    if not target:
+        return await answer_text(update, "❌ Пользователь не найден.\nОтветьте на его сообщение реплаем, или укажите @username / ID.")
+    if not db.is_gbanned(target.id):
+        return await answer_text(update, "❌ Этот пользователь не в глобальном бане.")
+    db.remove_gban(target.id)
+    groups = db.get_all_groups()
+    unbanned_in = 0
+    for g in groups:
+        try:
+            await context.bot.unban_chat_member(g["chat_id"], target.id)
+            unbanned_in += 1
+        except Exception:
+            pass
+    await answer_text(
+        update,
+        f"✅ Глобальный бан {target.mention_html()} снят.\n"
+        f"Разбанен в <b>{unbanned_in}/{len(groups)}</b> группах бота."
+    )
+
+# ── /gbanlist — список глобальных банов (только владельцы) ──
+async def gbanlist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not db.is_bot_owner(update.effective_user.id):
+        return
+    bans = db.get_all_gbans()
+    if not bans:
+        return await answer_text(update, "🌍 Список глобальных банов пуст.")
+    lines = [f"🌍 <b>Глобальные баны ({len(bans)}):</b>\n"]
+    for b in bans[:50]:
+        lines.append(f"• <code>{b['user_id']}</code> — {b['reason']}")
+    if len(bans) > 50:
+        lines.append(f"\n...и ещё {len(bans) - 50}")
+    await answer_text(update, "\n".join(lines))
 
 # ═══════════════════════════════════════════════════════════════════
 #  НОВЫЕ КОМАНДЫ
@@ -2464,6 +2577,7 @@ EXCL_ALIASES = {
     "!спор":        bet_cmd,
     "!хвалю":       gg_cmd,
     "!статистика":  mystats_cmd,
+    "!жалоба":      report_cmd,
 }
 
 async def exclamation_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2574,6 +2688,7 @@ def main():
     app.add_handler(CommandHandler("unban", unban_cmd))
     app.add_handler(CommandHandler("warn", warn_cmd))
     app.add_handler(CommandHandler("unwarn", unwarn_cmd))
+    app.add_handler(CommandHandler("report", report_cmd))
     app.add_handler(CommandHandler("pin", pin_cmd))
     app.add_handler(CommandHandler("unpin", unpin_cmd))
 
@@ -2650,6 +2765,9 @@ def main():
     app.add_handler(CommandHandler("botstats", botstats_cmd))
     app.add_handler(CommandHandler("allgroups", allgroups_cmd))
     app.add_handler(CommandHandler("divorceforce", divorceforce_cmd))
+    app.add_handler(CommandHandler("gban", gban_cmd))
+    app.add_handler(CommandHandler("ungban", ungban_cmd))
+    app.add_handler(CommandHandler("gbanlist", gbanlist_cmd))
 
     # Меню команд (инлайн-кнопки)
     app.add_handler(CallbackQueryHandler(commands_section_cb, pattern="^(cmd_section_|back_to_|open_shop)"))
